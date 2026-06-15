@@ -185,6 +185,19 @@ a{color:inherit;text-decoration:none;}
 .auth-err{font-size:12px;color:var(--red);margin-top:8px;text-align:center;}
 .auth-skip{font-size:12px;color:var(--ink3);margin-top:16px;text-align:center;cursor:pointer;text-decoration:underline;}
 
+/* ── PROFILE MENU ── */
+.profile-menu{position:fixed;top:0;right:0;bottom:0;left:0;z-index:150;display:none;}
+.profile-menu.on{display:block;}
+.pm-overlay{position:absolute;inset:0;background:rgba(0,0,0,.6);}
+.pm-panel{position:absolute;top:60px;right:12px;background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:6px;min-width:220px;z-index:1;}
+.pm-user{padding:12px 14px 10px;border-bottom:1px solid var(--border);margin-bottom:6px;}
+.pm-email{font-size:12px;color:var(--ink3);margin-top:2px;word-break:break-all;}
+.pm-name{font-size:14px;font-weight:800;}
+.pm-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink2);transition:background .12s;}
+.pm-item:hover{background:var(--card2);}
+.pm-item.danger{color:var(--red);}
+.pm-item-ico{font-size:17px;width:22px;text-align:center;}
+
 /* ── EMPTY STATE ── */
 .empty{text-align:center;padding:32px 16px;color:var(--ink4);}
 .empty-ico{font-size:36px;margin-bottom:10px;}
@@ -220,6 +233,7 @@ a{color:inherit;text-decoration:none;}
   <div class="hdr-right">
     <span class="badge-free" id="plan-badge">FREE</span>
     <button class="icon-btn" onclick="showModal('add-modal')" title="Add transaction">＋</button>
+    <button class="icon-btn" onclick="toggleProfileMenu()" title="Profile" id="profile-btn">👤</button>
   </div>
 </header>
 
@@ -334,6 +348,35 @@ a{color:inherit;text-decoration:none;}
   <button class="ni" data-v="goals" onclick="sv('goals')"><div class="ni-ico">🎯</div><div class="ni-lbl">Goals</div></button>
   <button class="ni" data-v="calc" onclick="sv('calc')"><div class="ni-ico">💱</div><div class="ni-lbl">Convert</div></button>
 </nav>
+<!-- PROFILE MENU -->
+<div class="profile-menu" id="profile-menu">
+  <div class="pm-overlay" onclick="toggleProfileMenu()"></div>
+  <div class="pm-panel">
+    <div class="pm-user">
+      <div class="pm-name" id="pm-name">My Account</div>
+      <div class="pm-email" id="pm-email"></div>
+    </div>
+    <div class="pm-item" onclick="upgradePro()">
+      <div class="pm-item-ico">⭐</div>Upgrade to PRO
+    </div>
+    <div class="pm-item" onclick="sv('transactions');toggleProfileMenu()">
+      <div class="pm-item-ico">📋</div>Transaction History
+    </div>
+    <div class="pm-item" onclick="sv('budget');toggleProfileMenu()">
+      <div class="pm-item-ico">📊</div>Manage Budgets
+    </div>
+    <div class="pm-item" onclick="sv('goals');toggleProfileMenu()">
+      <div class="pm-item-ico">🎯</div>Savings Goals
+    </div>
+    <div class="pm-item" onclick="exportData()">
+      <div class="pm-item-ico">📤</div>Export Data (PRO)
+    </div>
+    <div class="pm-item danger" onclick="signOut()">
+      <div class="pm-item-ico">🚪</div>Sign Out
+    </div>
+  </div>
+</div>
+
 </div><!-- /app -->
 
 <!-- ADD TRANSACTION MODAL -->
@@ -730,6 +773,33 @@ function fromNaira(){
 
 // ── UPGRADE ──
 function upgradePro(){toast('PRO via Flutterwave — coming soon! 🚀');}
+
+// ── PROFILE MENU ──
+function toggleProfileMenu(){
+  const menu = document.getElementById('profile-menu');
+  menu.classList.toggle('on');
+  // Update user info
+  const u = user || {};
+  document.getElementById('pm-email').textContent = u.email || 'Local mode (no account)';
+  document.getElementById('pm-name').textContent = u.email ? u.email.split('@')[0] : 'Guest';
+}
+
+async function signOut(){
+  if(!useLocal) await sb.auth.signOut();
+  user = null;
+  useLocal = false;
+  document.getElementById('profile-menu').classList.remove('on');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  // Clear local state
+  localTx=[]; localBud=[]; localGoals=[];
+  toast('Signed out successfully');
+}
+
+function exportData(){
+  toast('Export to PDF — PRO feature coming soon! 📊');
+  toggleProfileMenu();
+}
 
 // ── VIEW ──
 function sv(v){
