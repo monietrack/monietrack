@@ -34,8 +34,15 @@ a{color:inherit;text-decoration:none;}
 .icon-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border2);background:var(--card);color:var(--ink2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;}
 
 /* ── MAIN ── */
-#main{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:80px;scrollbar-width:none;}
-#main::-webkit-scrollbar{display:none;}
+#main{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:80px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;}
+#main::-webkit-scrollbar{width:5px;}
+#main::-webkit-scrollbar-track{background:transparent;}
+#main::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+#main::-webkit-scrollbar-thumb:hover{background:var(--green);}
+@media(max-width:480px){
+  #main{scrollbar-width:none;}
+  #main::-webkit-scrollbar{display:none;}
+}
 .view{display:none;padding:20px 16px;}
 .view.on{display:block;}
 
