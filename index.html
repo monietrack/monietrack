@@ -552,36 +552,68 @@ function startApp(){
 }
 
 // ── SUPABASE DB ──
+// ── ALWAYS save to localStorage first, then sync to Supabase if logged in ──
 async function getTx(){
-  if(useLocal) return localTx;
-  const {data} = await sb.from('transactions').select('*').eq('user_id',user.id).order('date',{ascending:false});
-  return data||[];
+  // Always load from localStorage first for instant display
+  const local = LS.get('tx',[]);
+  if(useLocal || !user) return local;
+  // If logged in, try Supabase
+  try{
+    const {data} = await sb.from('transactions').select('*').eq('user_id',user.id).order('date',{ascending:false});
+    if(data&&data.length>0){
+      LS.set('tx',data); // sync to local
+      return data;
+    }
+    return local;
+  }catch(e){ return local; }
 }
 async function addTxDB(tx){
-  if(useLocal){ localTx.unshift(tx); LS.set('tx',localTx); return; }
-  await sb.from('transactions').insert({...tx,user_id:user.id});
+  // ALWAYS save to localStorage immediately
+  const local = LS.get('tx',[]);
+  local.unshift(tx);
+  LS.set('tx',local);
+  localTx = local;
+  // Also save to Supabase if logged in
+  if(!useLocal && user){
+    try{ await sb.from('transactions').insert({...tx,user_id:user.id}); }catch(e){}
+  }
 }
 async function getBud(){
-  if(useLocal) return localBud;
-  const {data} = await sb.from('budgets').select('*').eq('user_id',user.id);
-  return data||[];
+  const local = LS.get('bud',[]);
+  if(useLocal || !user) return local;
+  try{
+    const {data} = await sb.from('budgets').select('*').eq('user_id',user.id);
+    if(data&&data.length>0){ LS.set('bud',data); return data; }
+    return local;
+  }catch(e){ return local; }
 }
 async function saveBudDB(b){
-  if(useLocal){
-    const i=localBud.findIndex(x=>x.cat===b.cat);
-    if(i>=0) localBud[i]=b; else localBud.push(b);
-    LS.set('bud',localBud); return;
+  const local = LS.get('bud',[]);
+  const i = local.findIndex(x=>x.cat===b.cat);
+  if(i>=0) local[i]=b; else local.push(b);
+  LS.set('bud',local);
+  localBud = local;
+  if(!useLocal && user){
+    try{ await sb.from('budgets').upsert({...b,user_id:user.id},{onConflict:'user_id,cat'}); }catch(e){}
   }
-  await sb.from('budgets').upsert({...b,user_id:user.id},{onConflict:'user_id,cat'});
 }
 async function getGoals(){
-  if(useLocal) return localGoals;
-  const {data} = await sb.from('goals').select('*').eq('user_id',user.id);
-  return data||[];
+  const local = LS.get('goals',[]);
+  if(useLocal || !user) return local;
+  try{
+    const {data} = await sb.from('goals').select('*').eq('user_id',user.id);
+    if(data&&data.length>0){ LS.set('goals',data); return data; }
+    return local;
+  }catch(e){ return local; }
 }
 async function saveGoalDB(g){
-  if(useLocal){ localGoals.push(g); LS.set('goals',localGoals); return; }
-  await sb.from('goals').insert({...g,user_id:user.id});
+  const local = LS.get('goals',[]);
+  local.push(g);
+  LS.set('goals',local);
+  localGoals = local;
+  if(!useLocal && user){
+    try{ await sb.from('goals').insert({...g,user_id:user.id}); }catch(e){}
+  }
 }
 
 // ── RATES ──
