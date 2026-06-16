@@ -605,21 +605,43 @@ async function doAuth(){
   const pass = document.getElementById('auth-pass').value;
   const err = document.getElementById('auth-err');
   const btn = document.getElementById('auth-submit');
-  if(!email||!pass){err.textContent='Enter email and password';return;}
+  if(!email){ err.textContent='Enter your email address'; return; }
+  if(!pass||pass.length<6){ err.textContent='Password must be at least 6 characters'; return; }
+  err.textContent='';
   btn.textContent='Please wait...'; btn.disabled=true;
   try{
     let res;
     if(authMode==='login'){
       res = await sb.auth.signInWithPassword({email,password:pass});
+      if(res.error){
+        err.textContent = res.error.message.includes('Invalid') ? 'Wrong email or password. Try again.' : res.error.message;
+        btn.textContent='Login'; btn.disabled=false; return;
+      }
+      user = res.data.user;
+      startApp();
     } else {
       res = await sb.auth.signUp({email,password:pass});
+      if(res.error){
+        err.textContent = res.error.message.includes('already') ? 'This email is already registered. Try logging in instead.' : res.error.message;
+        btn.textContent='Create Account'; btn.disabled=false; return;
+      }
+      // Check if email confirmation is required
+      if(res.data.user && !res.data.session){
+        // Email confirmation required
+        err.style.color='#00C853';
+        err.textContent='✅ Account created! Check your email for a confirmation link, then login.';
+        btn.textContent='Create Account'; btn.disabled=false;
+        // Switch to login tab
+        setTimeout(()=>{ authTab('login'); err.style.color=''; err.textContent=''; }, 4000);
+        return;
+      }
+      user = res.data.user;
+      startApp();
     }
-    if(res.error){ err.textContent=res.error.message; btn.textContent=authMode==='login'?'Login':'Create Account'; btn.disabled=false; return; }
-    user = res.data.user;
-    startApp();
   } catch(e){
-    err.textContent='Connection error. Using local mode.';
-    skipAuth();
+    err.textContent='Connection error — check your internet and try again.';
+    btn.textContent=authMode==='login'?'Login':'Create Account';
+    btn.disabled=false;
   }
 }
 
@@ -633,39 +655,69 @@ function skipAuth(){
 
 async function migrateLocalToSupabase(){
   if(useLocal || !user) return;
-  // Migrate any localStorage data up to Supabase
   const localTxData = LS.get('tx',[]);
   const localBudData = LS.get('bud',[]);
   const localGoalsData = LS.get('goals',[]);
+
   if(localTxData.length){
     try{
-      // Check if user already has data in Supabase
-      const {data} = await sb.from('transactions').select('id').eq('user_id',user.id).limit(1);
-      if(!data||data.length===0){
-        // No cloud data — migrate local data up
-        const toInsert = localTxData.map(t=>({...t,user_id:user.id}));
-        await sb.from('transactions').upsert(toInsert,{onConflict:'id'});
-        toast('Your data has been synced to the cloud ☁️');
+      const {data:existing} = await sb.from('transactions').select('id').eq('user_id',user.id).limit(1);
+      if(!existing||existing.length===0){
+        // Insert one by one to avoid bulk insert issues
+        let saved = 0;
+        for(const t of localTxData){
+          const row = {
+            id: Number(t.id),
+            user_id: user.id,
+            type: t.type,
+            amount: Number(t.amount),
+            description: t.description||t.desc||'',
+            cat: t.cat||'other',
+            date: t.date
+          };
+          const {error} = await sb.from('transactions').upsert(row);
+          if(!error) saved++;
+        }
+        if(saved>0) toast(`${saved} transactions synced to cloud ☁️`);
       }
-    }catch(e){}
+    }catch(e){ console.log('TX migration error:',e); }
   }
+
   if(localBudData.length){
     try{
-      const {data} = await sb.from('budgets').select('id').eq('user_id',user.id).limit(1);
-      if(!data||data.length===0){
-        const toInsert = localBudData.map(b=>({...b,user_id:user.id}));
-        await sb.from('budgets').upsert(toInsert,{onConflict:'id'});
+      const {data:existing} = await sb.from('budgets').select('id').eq('user_id',user.id).limit(1);
+      if(!existing||existing.length===0){
+        for(const b of localBudData){
+          const row = {
+            id: Number(b.id)||Date.now(),
+            user_id: user.id,
+            cat: b.cat,
+            budget_limit: Number(b.budget_limit||b.limit||0),
+            icon: b.icon||'📦'
+          };
+          await sb.from('budgets').upsert(row);
+        }
       }
-    }catch(e){}
+    }catch(e){ console.log('BUD migration error:',e); }
   }
+
   if(localGoalsData.length){
     try{
-      const {data} = await sb.from('goals').select('id').eq('user_id',user.id).limit(1);
-      if(!data||data.length===0){
-        const toInsert = localGoalsData.map(g=>({...g,user_id:user.id}));
-        await sb.from('goals').upsert(toInsert,{onConflict:'id'});
+      const {data:existing} = await sb.from('goals').select('id').eq('user_id',user.id).limit(1);
+      if(!existing||existing.length===0){
+        for(const g of localGoalsData){
+          const row = {
+            id: Number(g.id)||Date.now(),
+            user_id: user.id,
+            name: g.name,
+            icon: g.icon||'💰',
+            target: Number(g.target),
+            saved: Number(g.saved||0)
+          };
+          await sb.from('goals').upsert(row);
+        }
       }
-    }catch(e){}
+    }catch(e){ console.log('GOALS migration error:',e); }
   }
 }
 
