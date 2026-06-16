@@ -19,7 +19,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 // ── BACKGROUND PUSH NOTIFICATIONS ──
 // IMPORTANT: replace this with your own public VAPID key after generating keys.
-const VAPID_PUBLIC_KEY = 'PASTE_YOUR_PUBLIC_VAPID_KEY_HERE';
+const VAPID_PUBLIC_KEY = 'BDpnKdS-4FNGtQS8rAXMZwFDoNJhqu9eRX6Xq1sjqYy473KjLK2pCEinaXwJsgtpIYszM';
 
 function urlBase64ToUint8Array(base64String){
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -61,7 +61,7 @@ async function enablePushNotifications(){
     return;
   }
 
-  if(VAPID_PUBLIC_KEY === 'PASTE_YOUR_PUBLIC_VAPID_KEY_HERE'){
+  if(VAPID_PUBLIC_KEY === 'BDpnKdS-4FNGtQS8rAXMZwFDoNJhqu9eRX6Xq1sjqYy473KjLK2pCEinaXwJsgtpIYszM'){
     toast('Add your VAPID public key first');
     console.warn('Missing VAPID public key. Generate VAPID keys and replace VAPID_PUBLIC_KEY.');
     return;
@@ -123,6 +123,26 @@ async function registerServiceWorkerOnly(){
 }
 registerServiceWorkerOnly();
 
+
+
+// ── FLASH NIGERIA SPONSORED AD ──
+function openFlashNigeriaAd(){
+  window.open('https://www.flashnigeria.com','_blank','noopener,noreferrer');
+}
+
+function hideFlashNigeriaAd(e){
+  if(e) e.stopPropagation();
+  localStorage.setItem('mt_hide_flash_nigeria_ad','true');
+  const ad = document.getElementById('flash-ad-card');
+  if(ad) ad.style.display = 'none';
+}
+
+function initFlashNigeriaAd(){
+  const ad = document.getElementById('flash-ad-card');
+  if(ad && localStorage.getItem('mt_hide_flash_nigeria_ad') === 'true'){
+    ad.style.display = 'none';
+  }
+}
 
 </script>
 <style>
@@ -422,6 +442,115 @@ a{color:inherit;text-decoration:none;}
 .empty{text-align:center;padding:32px 16px;color:var(--ink4);}
 .empty-ico{font-size:36px;margin-bottom:10px;}
 .empty-txt{font-size:13px;line-height:1.5;}
+
+/* ── FLASH NIGERIA SPONSORED AD ── */
+.flash-ad-card{
+  background:linear-gradient(135deg,#111827,#0b0f19);
+  border:1px solid rgba(0,200,83,.22);
+  border-radius:var(--radius);
+  padding:14px;
+  margin-bottom:18px;
+  position:relative;
+  overflow:hidden;
+  cursor:pointer;
+}
+.flash-ad-card::after{
+  content:'⚡';
+  position:absolute;
+  right:-8px;
+  bottom:-18px;
+  font-size:90px;
+  opacity:.06;
+}
+.flash-ad-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+}
+.flash-ad-badge{
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.12em;
+  color:var(--green);
+  text-transform:uppercase;
+}
+.flash-ad-close{
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.04);
+  color:var(--ink3);
+  cursor:pointer;
+  font-size:14px;
+}
+.flash-ad-body{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  position:relative;
+  z-index:1;
+}
+.flash-ad-logo{
+  width:48px;
+  height:48px;
+  border-radius:14px;
+  background:var(--green);
+  color:#001b0b;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:25px;
+  font-weight:900;
+  box-shadow:0 4px 14px rgba(0,200,83,.22);
+  flex-shrink:0;
+}
+.flash-ad-title{
+  font-size:15px;
+  font-weight:900;
+  margin-bottom:3px;
+}
+.flash-ad-copy{
+  font-size:11px;
+  line-height:1.45;
+  color:var(--ink3);
+  margin-bottom:6px;
+}
+.flash-ad-link{
+  font-size:12px;
+  font-weight:900;
+  color:var(--green);
+}
+
+
+/* ── INVOICE LITE ── */
+.invoice-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-s);padding:14px;margin-bottom:9px;cursor:pointer;}
+.invoice-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;}
+.invoice-no{font-size:13px;font-weight:900;}
+.invoice-client{font-size:12px;color:var(--ink3);margin-top:2px;}
+.invoice-amt{font-size:15px;font-weight:900;color:var(--green);text-align:right;}
+.invoice-meta{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.invoice-due{font-size:11px;color:var(--ink3);}
+.invoice-status{font-size:10px;font-weight:900;padding:4px 8px;border-radius:999px;text-transform:uppercase;}
+.invoice-status.draft{background:rgba(136,136,136,.15);color:var(--ink3);}
+.invoice-status.sent{background:rgba(33,150,243,.15);color:var(--blue);}
+.invoice-status.paid{background:rgba(0,200,83,.15);color:var(--green);}
+.invoice-status.overdue{background:rgba(229,57,53,.15);color:var(--red);}
+.invoice-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;}
+.invoice-btn{border:none;border-radius:9px;padding:10px 8px;font-size:12px;font-weight:900;font-family:var(--font);cursor:pointer;}
+.invoice-btn.green{background:var(--green);color:#fff;}
+.invoice-btn.blue{background:var(--blue);color:#fff;}
+.invoice-btn.dark{background:var(--bg3);color:var(--ink2);border:1px solid var(--border2);}
+.invoice-btn.red{background:rgba(229,57,53,.13);color:var(--red);}
+.invoice-items{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:10px;margin-bottom:13px;}
+.invoice-item-row{display:grid;grid-template-columns:1.2fr .45fr .75fr 28px;gap:6px;margin-bottom:7px;}
+.invoice-item-row .fi{padding:9px 8px;font-size:12px;}
+.invoice-item-remove{border:none;border-radius:8px;background:rgba(229,57,53,.13);color:var(--red);font-weight:900;cursor:pointer;}
+.invoice-summary{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:12px;margin-bottom:12px;}
+.invoice-sum-line{display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);padding:5px 0;}
+.invoice-sum-line.total{color:var(--ink);font-weight:900;font-size:15px;border-top:1px solid var(--border2);margin-top:5px;padding-top:10px;}
+
 </style>
 </head>
 <body>
@@ -471,6 +600,22 @@ a{color:inherit;text-decoration:none;}
         <div class="bal-pill"><div class="pill-lbl">Saved</div><div class="pill-val sav" id="p-sav">₦0</div></div>
       </div>
     </div>
+
+    <div class="flash-ad-card" id="flash-ad-card" onclick="openFlashNigeriaAd()">
+      <div class="flash-ad-top">
+        <div class="flash-ad-badge">Sponsored</div>
+        <button class="flash-ad-close" onclick="hideFlashNigeriaAd(event)">×</button>
+      </div>
+      <div class="flash-ad-body">
+        <div class="flash-ad-logo">⚡</div>
+        <div>
+          <div class="flash-ad-title">Flash Nigeria</div>
+          <div class="flash-ad-copy">Breaking Nigerian news, live updates, and fresh stories from across the web.</div>
+          <div class="flash-ad-link">Visit www.flashnigeria.com →</div>
+        </div>
+      </div>
+    </div>
+
     <div class="rates" id="rates-bar">
       <div class="rate"><div class="rate-pair">USD/NGN</div><div class="rate-val" id="r-usd">Loading...</div></div>
       <div class="rate"><div class="rate-pair">EUR/NGN</div><div class="rate-val" id="r-eur">—</div></div>
@@ -574,6 +719,27 @@ a{color:inherit;text-decoration:none;}
       <button class="export-btn" onclick="exportCSV()">📤 Download Transactions CSV</button>
       <div class="report-note">PDF includes income, expenses, net balance, category summary and transaction table.</div>
     </div>
+  </div>
+
+
+  <!-- INVOICES -->
+  <div class="view" id="invoices-view">
+    <div class="sec" style="margin-bottom:14px;">
+      <div class="sec-t">Invoice Lite</div>
+      <div class="sec-a" onclick="openInvoiceModal()">＋ New</div>
+    </div>
+    <div class="pro-gate" style="text-align:left;">
+      <div class="pro-title">QuickBooks-style invoicing, simplified</div>
+      <div class="pro-sub">Create invoices, download PDF, mark as paid, and automatically record income.</div>
+    </div>
+    <select class="fi" id="invoice-filter" style="margin-bottom:12px;" onchange="renderInvoices()">
+      <option value="all">All Invoices</option>
+      <option value="draft">Draft</option>
+      <option value="sent">Sent</option>
+      <option value="paid">Paid</option>
+      <option value="overdue">Overdue</option>
+    </select>
+    <div id="invoice-list"></div>
   </div>
 
   <!-- CALCULATOR -->
@@ -688,6 +854,9 @@ a{color:inherit;text-decoration:none;}
     <div class="pm-item" onclick="sv('goals');toggleProfileMenu()">
       <div class="pm-item-ico">🎯</div>Savings Goals
     </div>
+    <div class="pm-item" onclick="sv('invoices');toggleProfileMenu()">
+      <div class="pm-item-ico">🧾</div>Invoices
+    </div>
     <div class="pm-item" onclick="exportData()">
       <div class="pm-item-ico">📤</div>Export Data (PRO)
     </div>
@@ -793,6 +962,42 @@ a{color:inherit;text-decoration:none;}
       <button class="modal-close" onclick="hideModal('goal-detail-modal')">✕</button>
     </div>
     <div id="goal-detail-content"></div>
+  </div>
+</div>
+
+
+<!-- INVOICE MODAL -->
+<div class="overlay" id="invoice-modal" onclick="if(event.target===this)hideModal('invoice-modal')">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="invoice-modal-title">New Invoice</div>
+      <button class="modal-close" onclick="hideModal('invoice-modal')">✕</button>
+    </div>
+    <input type="hidden" id="invoice-edit-id"/>
+    <div class="fg"><label class="fl">Client Name</label><input class="fi" id="inv-client" type="text" placeholder="e.g. Jessica Libbey"/></div>
+    <div class="fg"><label class="fl">Client Email</label><input class="fi" id="inv-email" type="email" placeholder="client@email.com"/></div>
+    <div class="fg"><label class="fl">Due Date</label><input class="fi" id="inv-due" type="date"/></div>
+    <div class="fg">
+      <label class="fl">Invoice Items</label>
+      <div class="invoice-items" id="invoice-items"></div>
+      <button class="invoice-btn dark" style="width:100%;" onclick="addInvoiceItem()">＋ Add Item</button>
+    </div>
+    <div class="fg"><label class="fl">Tax (%)</label><input class="fi" id="inv-tax" type="number" value="0" inputmode="decimal" oninput="updateInvoicePreview()"/></div>
+    <div class="fg"><label class="fl">Discount (₦)</label><input class="fi" id="inv-discount" type="number" value="0" inputmode="decimal" oninput="updateInvoicePreview()"/></div>
+    <div class="fg"><label class="fl">Notes</label><input class="fi" id="inv-notes" type="text" placeholder="Payment note or thank you message"/></div>
+    <div class="invoice-summary" id="invoice-preview"></div>
+    <button class="sub-btn" onclick="saveInvoice()">Save Invoice</button>
+  </div>
+</div>
+
+<!-- INVOICE DETAIL MODAL -->
+<div class="overlay" id="invoice-detail-modal" onclick="if(event.target===this)hideModal('invoice-detail-modal')">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">Invoice Details</div>
+      <button class="modal-close" onclick="hideModal('invoice-detail-modal')">✕</button>
+    </div>
+    <div id="invoice-detail-content"></div>
   </div>
 </div>
 
@@ -982,7 +1187,9 @@ async function startApp(){
   await migrateLocalToSupabase();
   loadRates();
   await loadBills();
+  await loadInvoices();
   renderAll();
+  initFlashNigeriaAd();
   updatePushButton();
   document.getElementById('tx-date').value = today();
   const reportMonthEl = document.getElementById('report-month');
@@ -1934,6 +2141,329 @@ async function downloadMonthlyPDF(){
 }
 
 
+
+// ── INVOICE LITE ──
+let invoices = [];
+let invoiceItemsDraft = [];
+
+function invStatusClass(status){ return String(status || 'draft').toLowerCase(); }
+
+function nextInvoiceNumber(){
+  const year = new Date().getFullYear();
+  const count = (invoices.length || 0) + 1;
+  return `MT-${year}-${String(count).padStart(4,'0')}`;
+}
+
+function calcInvoiceTotals(items, taxPct=0, discount=0){
+  const subtotal = (items || []).reduce((s,it)=>s + (Number(it.qty||0) * Number(it.price||0)), 0);
+  const tax = subtotal * (Number(taxPct||0)/100);
+  const total = Math.max(0, subtotal + tax - Number(discount||0));
+  return { subtotal, tax, discount:Number(discount||0), total };
+}
+
+async function loadInvoices(){
+  if(useLocal || !user){
+    invoices = LS.get('invoices',[]);
+    renderInvoices();
+    return;
+  }
+  const { data, error } = await sb
+    .from('invoices')
+    .select('*, invoice_items(*)')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending:false });
+  if(error){
+    console.error('FETCH INVOICES ERROR:', error);
+    invoices = LS.get('invoices',[]);
+    renderInvoices();
+    return;
+  }
+  invoices = (data || []).map(inv => ({ ...inv, items: inv.invoice_items || inv.items || [] }));
+  renderInvoices();
+}
+
+function renderInvoices(){
+  const el = document.getElementById('invoice-list');
+  if(!el) return;
+  const filter = document.getElementById('invoice-filter')?.value || 'all';
+  let list = invoices || [];
+  list = list.map(inv => {
+    if(inv.status !== 'paid' && inv.due_date && new Date(inv.due_date) < new Date(today())){
+      return { ...inv, computedStatus:'overdue' };
+    }
+    return { ...inv, computedStatus: inv.status || 'draft' };
+  });
+  if(filter !== 'all') list = list.filter(inv => inv.computedStatus === filter);
+  if(!list.length){
+    el.innerHTML = '<div class="empty"><div class="empty-ico">🧾</div><div class="empty-txt">No invoices yet.<br>Tap ＋ New to create one.</div></div>';
+    return;
+  }
+  el.innerHTML = list.map(inv => {
+    const status = inv.computedStatus || inv.status || 'draft';
+    return `<div class="invoice-card" onclick="openInvoiceDetail('${inv.id}')">
+      <div class="invoice-top">
+        <div>
+          <div class="invoice-no">${inv.invoice_no || 'Invoice'}</div>
+          <div class="invoice-client">${inv.client_name || 'Client'}</div>
+        </div>
+        <div class="invoice-amt">${fmt(inv.total)}</div>
+      </div>
+      <div class="invoice-meta">
+        <div class="invoice-due">Due: ${inv.due_date ? fmtDate(inv.due_date) : 'No due date'}</div>
+        <span class="invoice-status ${invStatusClass(status)}">${status}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openInvoiceModal(invoiceId=''){
+  const editing = invoiceId ? invoices.find(i => String(i.id) === String(invoiceId)) : null;
+  document.getElementById('invoice-edit-id').value = editing?.id || '';
+  document.getElementById('invoice-modal-title').textContent = editing ? 'Edit Invoice' : 'New Invoice';
+  document.getElementById('inv-client').value = editing?.client_name || '';
+  document.getElementById('inv-email').value = editing?.client_email || '';
+  document.getElementById('inv-due').value = editing?.due_date || today();
+  document.getElementById('inv-tax').value = editing?.tax_pct || 0;
+  document.getElementById('inv-discount').value = editing?.discount || 0;
+  document.getElementById('inv-notes').value = editing?.notes || '';
+  invoiceItemsDraft = editing?.items?.length ? editing.items.map(it => ({description: it.description || '', qty: Number(it.qty || 1), price: Number(it.price || 0)})) : [{ description:'', qty:1, price:0 }];
+  renderInvoiceItemInputs();
+  showModal('invoice-modal');
+}
+
+function addInvoiceItem(){
+  invoiceItemsDraft.push({ description:'', qty:1, price:0 });
+  renderInvoiceItemInputs();
+}
+
+function removeInvoiceItem(idx){
+  invoiceItemsDraft.splice(idx,1);
+  if(!invoiceItemsDraft.length) invoiceItemsDraft.push({ description:'', qty:1, price:0 });
+  renderInvoiceItemInputs();
+}
+
+function renderInvoiceItemInputs(){
+  const el = document.getElementById('invoice-items');
+  if(!el) return;
+  el.innerHTML = invoiceItemsDraft.map((it,idx)=>`
+    <div class="invoice-item-row">
+      <input class="fi" placeholder="Service/item" value="${String(it.description||'').replaceAll('"','&quot;')}" oninput="invoiceItemsDraft[${idx}].description=this.value;updateInvoicePreview()">
+      <input class="fi" type="number" placeholder="Qty" value="${it.qty||1}" oninput="invoiceItemsDraft[${idx}].qty=this.value;updateInvoicePreview()">
+      <input class="fi" type="number" placeholder="Price" value="${it.price||0}" oninput="invoiceItemsDraft[${idx}].price=this.value;updateInvoicePreview()">
+      <button class="invoice-item-remove" onclick="removeInvoiceItem(${idx})">×</button>
+    </div>
+  `).join('');
+  updateInvoicePreview();
+}
+
+function updateInvoicePreview(){
+  const taxPct = parseFloat(document.getElementById('inv-tax')?.value || 0);
+  const discount = parseFloat(document.getElementById('inv-discount')?.value || 0);
+  const t = calcInvoiceTotals(invoiceItemsDraft, taxPct, discount);
+  const el = document.getElementById('invoice-preview');
+  if(el){
+    el.innerHTML = `
+      <div class="invoice-sum-line"><span>Subtotal</span><b>${fmt(t.subtotal)}</b></div>
+      <div class="invoice-sum-line"><span>Tax</span><b>${fmt(t.tax)}</b></div>
+      <div class="invoice-sum-line"><span>Discount</span><b>-${fmt(t.discount)}</b></div>
+      <div class="invoice-sum-line total"><span>Total</span><b>${fmt(t.total)}</b></div>
+    `;
+  }
+}
+
+async function saveInvoice(){
+  const invoiceId = document.getElementById('invoice-edit-id').value;
+  const clientName = document.getElementById('inv-client').value.trim();
+  const clientEmail = document.getElementById('inv-email').value.trim();
+  const dueDate = document.getElementById('inv-due').value || today();
+  const taxPct = parseFloat(document.getElementById('inv-tax').value || 0);
+  const discount = parseFloat(document.getElementById('inv-discount').value || 0);
+  const notes = document.getElementById('inv-notes').value.trim();
+  const cleanItems = invoiceItemsDraft.filter(it => String(it.description || '').trim() && Number(it.price || 0) > 0).map(it => ({ description:String(it.description).trim(), qty:Number(it.qty||1), price:Number(it.price||0) }));
+  if(!clientName){ toast('Enter client name ⚠️'); return; }
+  if(!cleanItems.length){ toast('Add at least one invoice item ⚠️'); return; }
+  const totals = calcInvoiceTotals(cleanItems, taxPct, discount);
+
+  if(useLocal || !user){
+    const local = LS.get('invoices',[]);
+    if(invoiceId){
+      const idx = local.findIndex(i => String(i.id) === String(invoiceId));
+      if(idx >= 0) local[idx] = { ...local[idx], client_name:clientName, client_email:clientEmail, due_date:dueDate, tax_pct:taxPct, discount, notes, items:cleanItems, ...totals };
+    } else {
+      local.unshift({ id:Date.now(), invoice_no:nextInvoiceNumber(), client_name:clientName, client_email:clientEmail, due_date:dueDate, tax_pct:taxPct, discount, notes, items:cleanItems, status:'draft', ...totals, created_at:new Date().toISOString() });
+    }
+    LS.set('invoices', local);
+    invoices = local;
+    hideModal('invoice-modal');
+    toast('Invoice saved 🧾');
+    renderInvoices();
+    return;
+  }
+
+  if(invoiceId){
+    const { error } = await sb.from('invoices').update({
+      client_name:clientName, client_email:clientEmail, due_date:dueDate, tax_pct:taxPct, discount, notes,
+      subtotal:totals.subtotal, tax:totals.tax, total:totals.total
+    }).eq('id', invoiceId).eq('user_id', user.id);
+    if(error){ toast('Invoice update failed: '+error.message); return; }
+    await sb.from('invoice_items').delete().eq('invoice_id', invoiceId);
+    const rows = cleanItems.map(it => ({ invoice_id:invoiceId, user_id:user.id, description:it.description, qty:it.qty, price:it.price, line_total:it.qty*it.price }));
+    await sb.from('invoice_items').insert(rows);
+  } else {
+    const { data: inv, error } = await sb.from('invoices').insert({
+      user_id:user.id, invoice_no:nextInvoiceNumber(), client_name:clientName, client_email:clientEmail, due_date:dueDate,
+      status:'draft', tax_pct:taxPct, discount, notes, subtotal:totals.subtotal, tax:totals.tax, total:totals.total
+    }).select().single();
+    if(error){ toast('Invoice save failed: '+error.message); return; }
+    const rows = cleanItems.map(it => ({ invoice_id:inv.id, user_id:user.id, description:it.description, qty:it.qty, price:it.price, line_total:it.qty*it.price }));
+    const { error: itemError } = await sb.from('invoice_items').insert(rows);
+    if(itemError){ toast('Invoice items failed: '+itemError.message); return; }
+  }
+  hideModal('invoice-modal');
+  toast('Invoice saved 🧾');
+  await loadInvoices();
+}
+
+async function openInvoiceDetail(invoiceId){
+  const inv = invoices.find(i => String(i.id) === String(invoiceId));
+  if(!inv) return;
+  const status = inv.status !== 'paid' && inv.due_date && new Date(inv.due_date) < new Date(today()) ? 'overdue' : inv.status;
+  const items = inv.items || inv.invoice_items || [];
+  document.getElementById('invoice-detail-content').innerHTML = `
+    <div class="invoice-card" style="cursor:default;">
+      <div class="invoice-top">
+        <div>
+          <div class="invoice-no">${inv.invoice_no}</div>
+          <div class="invoice-client">${inv.client_name}</div>
+          <div class="invoice-client">${inv.client_email || ''}</div>
+        </div>
+        <div>
+          <div class="invoice-amt">${fmt(inv.total)}</div>
+          <span class="invoice-status ${invStatusClass(status)}">${status}</span>
+        </div>
+      </div>
+      <div class="invoice-due">Due: ${inv.due_date ? fmtDate(inv.due_date) : 'No due date'}</div>
+    </div>
+    <div class="invoice-summary">
+      ${(items||[]).map(it => `<div class="invoice-sum-line"><span>${it.description} × ${it.qty}</span><b>${fmt(Number(it.price||0)*Number(it.qty||0))}</b></div>`).join('')}
+      <div class="invoice-sum-line"><span>Subtotal</span><b>${fmt(inv.subtotal)}</b></div>
+      <div class="invoice-sum-line"><span>Tax</span><b>${fmt(inv.tax)}</b></div>
+      <div class="invoice-sum-line"><span>Discount</span><b>-${fmt(inv.discount)}</b></div>
+      <div class="invoice-sum-line total"><span>Total</span><b>${fmt(inv.total)}</b></div>
+    </div>
+    <div class="invoice-actions">
+      <button class="invoice-btn blue" onclick="downloadInvoicePDF('${inv.id}')">PDF</button>
+      <button class="invoice-btn dark" onclick="hideModal('invoice-detail-modal');openInvoiceModal('${inv.id}')">Edit</button>
+      ${inv.status !== 'paid' ? `<button class="invoice-btn green" onclick="markInvoicePaid('${inv.id}')">Mark Paid</button>` : `<button class="invoice-btn dark" onclick="toast('Already paid ✅')">Paid ✅</button>`}
+      ${inv.status === 'draft' ? `<button class="invoice-btn red" onclick="deleteInvoice('${inv.id}')">Delete</button>` : `<button class="invoice-btn dark" onclick="toast('Only draft invoices can be deleted')">Locked</button>`}
+    </div>
+  `;
+  showModal('invoice-detail-modal');
+}
+
+async function markInvoicePaid(invoiceId){
+  const inv = invoices.find(i => String(i.id) === String(invoiceId));
+  if(!inv) return;
+  if(useLocal || !user){
+    const local = LS.get('invoices',[]);
+    const idx = local.findIndex(i => String(i.id) === String(invoiceId));
+    if(idx >= 0){ local[idx].status='paid'; local[idx].paid_at=new Date().toISOString(); }
+    LS.set('invoices', local);
+    await addTxDB({ type:'income', amount:Number(inv.total), description:`Invoice payment - ${inv.client_name}`, cat:'business', date:today() });
+  } else {
+    const { error } = await sb.from('invoices').update({ status:'paid', paid_at:new Date().toISOString() }).eq('id', invoiceId).eq('user_id', user.id);
+    if(error){ toast('Mark paid failed: '+error.message); return; }
+    await addTxDB({ type:'income', amount:Number(inv.total), description:`Invoice payment - ${inv.client_name}`, cat:'business', date:today() });
+  }
+  hideModal('invoice-detail-modal');
+  toast('Invoice marked paid + income recorded ✅');
+  await loadInvoices();
+  renderAll();
+}
+
+async function deleteInvoice(invoiceId){
+  const inv = invoices.find(i => String(i.id) === String(invoiceId));
+  if(!inv || inv.status !== 'draft'){ toast('Only draft invoices can be deleted'); return; }
+  if(!confirm('Delete this draft invoice?')) return;
+  if(useLocal || !user){
+    const local = LS.get('invoices',[]).filter(i => String(i.id) !== String(invoiceId));
+    LS.set('invoices', local);
+    invoices = local;
+  } else {
+    await sb.from('invoice_items').delete().eq('invoice_id', invoiceId);
+    const { error } = await sb.from('invoices').delete().eq('id', invoiceId).eq('user_id', user.id);
+    if(error){ toast('Delete failed: '+error.message); return; }
+  }
+  hideModal('invoice-detail-modal');
+  toast('Draft invoice deleted');
+  await loadInvoices();
+}
+
+function downloadInvoicePDF(invoiceId){
+  if(typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF){ toast('PDF tool still loading'); return; }
+  const inv = invoices.find(i => String(i.id) === String(invoiceId));
+  if(!inv) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'pt', format:'a4' });
+  const margin = 42;
+  const pageW = doc.internal.pageSize.getWidth();
+  let y = 46;
+  const items = inv.items || inv.invoice_items || [];
+  function money(n){ return 'NGN ' + Number(n || 0).toLocaleString('en-NG', {maximumFractionDigits:0}); }
+  doc.setFillColor(0,200,83);
+  doc.roundedRect(margin, y, 44, 44, 10, 10, 'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(22); doc.setFont('helvetica','bold');
+  doc.text('N', margin+22, y+29, {align:'center'});
+  doc.setTextColor(20,20,20); doc.setFontSize(23);
+  doc.text('MonieTrack Invoice', margin+58, y+20);
+  doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+  doc.text('Track Every Kobo', margin+58, y+38);
+  doc.setTextColor(20,20,20); doc.setFontSize(12); doc.setFont('helvetica','bold');
+  doc.text(inv.invoice_no || 'Invoice', pageW-margin, y+18, {align:'right'});
+  doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+  doc.text('Due: ' + (inv.due_date || ''), pageW-margin, y+36, {align:'right'});
+  y += 82;
+  doc.setTextColor(20,20,20); doc.setFontSize(12); doc.setFont('helvetica','bold');
+  doc.text('Bill To:', margin, y);
+  doc.setFont('helvetica','normal');
+  doc.text(inv.client_name || '', margin, y+18);
+  if(inv.client_email) doc.text(inv.client_email, margin, y+34);
+  y += 62;
+  doc.setFillColor(0,200,83);
+  doc.rect(margin, y, pageW-margin*2, 26, 'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+  doc.text('DESCRIPTION', margin+8, y+17);
+  doc.text('QTY', pageW-margin-170, y+17);
+  doc.text('PRICE', pageW-margin-120, y+17);
+  doc.text('TOTAL', pageW-margin-8, y+17, {align:'right'});
+  y += 26;
+  doc.setFont('helvetica','normal'); doc.setFontSize(9);
+  items.forEach((it,idx)=>{
+    if(idx % 2 === 0){ doc.setFillColor(248,248,248); doc.rect(margin, y, pageW-margin*2, 25, 'F'); }
+    doc.setTextColor(40,40,40);
+    doc.text(String(it.description || '').slice(0,42), margin+8, y+16);
+    doc.text(String(it.qty || 1), pageW-margin-170, y+16);
+    doc.text(money(it.price), pageW-margin-120, y+16);
+    doc.text(money(Number(it.qty||1)*Number(it.price||0)), pageW-margin-8, y+16, {align:'right'});
+    y += 25;
+  });
+  y += 18;
+  const lines = [['Subtotal', inv.subtotal], ['Tax', inv.tax], ['Discount', -Number(inv.discount||0)], ['Total', inv.total]];
+  lines.forEach(([label,val],idx)=>{
+    doc.setFont('helvetica', idx===3?'bold':'normal');
+    doc.setFontSize(idx===3?13:10); doc.setTextColor(20,20,20);
+    doc.text(label, pageW-margin-160, y);
+    doc.text(money(val), pageW-margin, y, {align:'right'});
+    y += idx===3?20:16;
+  });
+  y += 16;
+  doc.setTextColor(100,100,100); doc.setFontSize(10); doc.setFont('helvetica','normal');
+  doc.text('Notes: ' + (inv.notes || 'Thank you for your business.'), margin, y, {maxWidth:pageW-margin*2});
+  doc.save(`${inv.invoice_no || 'MonieTrack_Invoice'}.pdf`);
+  toast('Invoice PDF downloaded ✅');
+}
+
+
 // ── CALCULATOR ──
 function setCurr(code,sym){
   currCode=code;
@@ -2079,6 +2609,48 @@ alter table bills disable row level security;
 
 grant all on table bills to anon;
 grant all on table bills to authenticated;
+-->
+
+
+<!--
+SUPABASE SQL FOR INVOICE LITE:
+
+create table if not exists invoices (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  invoice_no text,
+  client_name text not null,
+  client_email text,
+  due_date date,
+  status text default 'draft',
+  subtotal numeric default 0,
+  tax_pct numeric default 0,
+  tax numeric default 0,
+  discount numeric default 0,
+  total numeric default 0,
+  notes text,
+  paid_at timestamptz,
+  created_at timestamptz default now()
+);
+
+create table if not exists invoice_items (
+  id uuid primary key default gen_random_uuid(),
+  invoice_id uuid not null,
+  user_id uuid not null,
+  description text not null,
+  qty numeric default 1,
+  price numeric default 0,
+  line_total numeric default 0,
+  created_at timestamptz default now()
+);
+
+alter table invoices disable row level security;
+alter table invoice_items disable row level security;
+
+grant all on table invoices to anon;
+grant all on table invoices to authenticated;
+grant all on table invoice_items to anon;
+grant all on table invoice_items to authenticated;
 -->
 
 </body>
