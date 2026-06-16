@@ -17,6 +17,7 @@
 <link rel="shortcut icon" href="monietrack_icon_192.png"/>
 <link rel="icon" href="favicon.ico" sizes="any"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <style>
 :root{
   --green:#00C853;--gold:#F5A623;--red:#E53935;--blue:#2196F3;
@@ -123,6 +124,42 @@ a{color:inherit;text-decoration:none;}
 .goal-pct{font-size:12px;font-weight:800;color:var(--green);}
 .goal-add-btn{background:var(--card);border:1px dashed var(--border2);border-radius:var(--radius-s);padding:14px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;color:var(--ink3);font-size:13px;font-weight:600;}
 
+
+
+/* ── PDF REPORT ── */
+.report-btn{
+  width:100%;
+  background:linear-gradient(135deg,var(--green),#009944);
+  border:none;
+  color:#fff;
+  border-radius:11px;
+  padding:14px;
+  font-size:13px;
+  font-weight:900;
+  font-family:var(--font);
+  cursor:pointer;
+  margin-bottom:12px;
+  box-shadow:0 4px 12px rgba(0,200,83,.2);
+}
+.report-btn:active{transform:scale(.98);}
+.month-select-row{
+  display:flex;
+  gap:8px;
+  margin-bottom:12px;
+}
+.month-select-row .fi{
+  flex:1;
+  padding:10px 12px;
+  font-size:13px;
+}
+.report-note{
+  font-size:11px;
+  color:var(--ink3);
+  line-height:1.5;
+  text-align:center;
+  margin-top:-4px;
+  margin-bottom:16px;
+}
 
 /* ── ANALYTICS ── */
 .analytics-card{
@@ -465,13 +502,23 @@ a{color:inherit;text-decoration:none;}
       <div id="analytics-cats"></div>
     </div>
 
-    <button class="export-btn" onclick="exportCSV()">📤 Download Transactions CSV</button>
+    <div class="analytics-card">
+      <div class="sec" style="margin-bottom:10px;">
+        <div class="sec-t">Monthly Statement</div>
+      </div>
+      <div class="month-select-row">
+        <input class="fi" id="report-month" type="month">
+      </div>
+      <button class="report-btn" onclick="downloadMonthlyPDF()">📄 Download Monthly PDF Statement</button>
+      <button class="export-btn" onclick="exportCSV()">📤 Download Transactions CSV</button>
+      <div class="report-note">PDF includes income, expenses, net balance, category summary and transaction table.</div>
+    </div>
 
     <div class="pro-gate">
-      <div class="pro-ico">📄</div>
-      <div class="pro-title">PDF Monthly Report</div>
-      <div class="pro-sub">Next upgrade: beautiful PDF statement with income, expenses, budgets and savings goals.</div>
-      <button class="pro-btn" onclick="toast('PDF report is coming next 🚀')">Coming Next</button>
+      <div class="pro-ico">⭐</div>
+      <div class="pro-title">Coming Pro Features</div>
+      <div class="pro-sub">Next: branded PDF reports, unlimited history, smart insights and budget warnings.</div>
+      <button class="pro-btn" onclick="toast('Pro plan coming soon 🚀')">Coming Soon</button>
     </div>
   </div>
 
@@ -850,6 +897,8 @@ async function startApp(){
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('app').style.display='flex';
   document.getElementById('tx-date').value = today();
+  const reportMonthEl = document.getElementById('report-month');
+  if(reportMonthEl) reportMonthEl.value = new Date().toISOString().slice(0,7);
   setType('income');
   const mo = new Date().toLocaleString('en-NG',{month:'long',year:'numeric'});
   document.getElementById('bal-month').textContent = mo;
@@ -1482,6 +1531,196 @@ async function signOut(){
   // Force clean reload — simplest and most reliable
   window.location.reload();
 }
+
+
+async function downloadMonthlyPDF(){
+  if(typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF){
+    toast('PDF tool still loading. Try again.');
+    return;
+  }
+
+  const txs = await getTx();
+  if(!txs.length){
+    toast('No transactions to create report');
+    return;
+  }
+
+  const monthInput = document.getElementById('report-month');
+  const selectedMonth = monthInput && monthInput.value ? monthInput.value : new Date().toISOString().slice(0,7);
+  const monthlyTxs = txs.filter(t => String(t.date || '').slice(0,7) === selectedMonth);
+
+  if(!monthlyTxs.length){
+    toast('No transactions for selected month');
+    return;
+  }
+
+  const income = monthlyTxs.filter(t => t.type === 'income').reduce((s,t) => s + Number(t.amount || 0), 0);
+  const expense = monthlyTxs.filter(t => t.type === 'expense').reduce((s,t) => s + Number(t.amount || 0), 0);
+  const net = income - expense;
+
+  const byCat = {};
+  monthlyTxs.filter(t => t.type === 'expense').forEach(t => {
+    const cat = t.cat || 'other';
+    byCat[cat] = (byCat[cat] || 0) + Number(t.amount || 0);
+  });
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'pt', format:'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 40;
+  let y = 42;
+
+  function money(n){
+    return 'NGN ' + Number(n || 0).toLocaleString('en-NG', {maximumFractionDigits:0});
+  }
+  function safeText(v){
+    return String(v || '').replace(/[₦]/g, 'NGN ');
+  }
+  function addFooter(){
+    doc.setFontSize(9);
+    doc.setTextColor(130,130,130);
+    doc.text('Generated by MonieTrack — Track Every Kobo', margin, pageH - 24);
+    doc.text(new Date().toLocaleString('en-NG'), pageW - margin, pageH - 24, {align:'right'});
+  }
+
+  doc.setFillColor(0, 200, 83);
+  doc.roundedRect(margin, y, 44, 44, 10, 10, 'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(22);
+  doc.setFont('helvetica','bold');
+  doc.text('N', margin + 22, y + 29, {align:'center'});
+
+  doc.setTextColor(20,20,20);
+  doc.setFontSize(24);
+  doc.setFont('helvetica','bold');
+  doc.text('MonieTrack', margin + 58, y + 20);
+
+  doc.setTextColor(90,90,90);
+  doc.setFontSize(10);
+  doc.setFont('helvetica','normal');
+  doc.text('Monthly Financial Statement', margin + 58, y + 38);
+
+  doc.setFontSize(11);
+  doc.text('Account: ' + (user?.email || 'Local User'), pageW - margin, y + 18, {align:'right'});
+  doc.text('Period: ' + selectedMonth, pageW - margin, y + 36, {align:'right'});
+
+  y += 78;
+
+  const cardW = (pageW - margin*2 - 20) / 3;
+  const cards = [
+    ['Income', income, [0, 200, 83]],
+    ['Expenses', expense, [229, 57, 53]],
+    ['Net Balance', net, net >= 0 ? [0, 200, 83] : [229, 57, 53]]
+  ];
+
+  cards.forEach((c, i) => {
+    const x = margin + i * (cardW + 10);
+    doc.setFillColor(248,248,248);
+    doc.setDrawColor(225,225,225);
+    doc.roundedRect(x, y, cardW, 74, 8, 8, 'FD');
+    doc.setTextColor(110,110,110);
+    doc.setFontSize(9);
+    doc.setFont('helvetica','bold');
+    doc.text(c[0].toUpperCase(), x + 14, y + 22);
+    doc.setTextColor(c[2][0], c[2][1], c[2][2]);
+    doc.setFontSize(16);
+    doc.text(money(c[1]), x + 14, y + 50);
+  });
+
+  y += 104;
+
+  doc.setTextColor(20,20,20);
+  doc.setFontSize(14);
+  doc.setFont('helvetica','bold');
+  doc.text('Spending by Category', margin, y);
+  y += 18;
+
+  const catRows = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+  if(!catRows.length){
+    doc.setTextColor(120,120,120);
+    doc.setFontSize(10);
+    doc.setFont('helvetica','normal');
+    doc.text('No expenses recorded for this month.', margin, y);
+    y += 22;
+  } else {
+    catRows.slice(0,8).forEach(([cat, amount]) => {
+      const c = getCat('expense', cat);
+      const pct = expense ? Math.round((amount / expense) * 100) : 0;
+      doc.setFillColor(245,245,245);
+      doc.roundedRect(margin, y, pageW - margin*2, 24, 5, 5, 'F');
+      doc.setTextColor(30,30,30);
+      doc.setFontSize(10);
+      doc.setFont('helvetica','bold');
+      doc.text(safeText(c.name), margin + 10, y + 16);
+      doc.setTextColor(229,57,53);
+      doc.text(money(amount) + ' (' + pct + '%)', pageW - margin - 10, y + 16, {align:'right'});
+      y += 30;
+    });
+  }
+
+  y += 18;
+
+  doc.setTextColor(20,20,20);
+  doc.setFontSize(14);
+  doc.setFont('helvetica','bold');
+  doc.text('Transactions', margin, y);
+  y += 20;
+
+  function tableHeader(){
+    doc.setFillColor(0, 200, 83);
+    doc.rect(margin, y, pageW - margin*2, 24, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(9);
+    doc.setFont('helvetica','bold');
+    doc.text('DATE', margin + 8, y + 16);
+    doc.text('TYPE', margin + 82, y + 16);
+    doc.text('DESCRIPTION', margin + 150, y + 16);
+    doc.text('CATEGORY', pageW - margin - 165, y + 16);
+    doc.text('AMOUNT', pageW - margin - 8, y + 16, {align:'right'});
+    y += 24;
+  }
+
+  tableHeader();
+
+  monthlyTxs.forEach((t, idx) => {
+    if(y > pageH - 70){
+      addFooter();
+      doc.addPage();
+      y = 44;
+      tableHeader();
+    }
+
+    if(idx % 2 === 0){
+      doc.setFillColor(250,250,250);
+      doc.rect(margin, y, pageW - margin*2, 24, 'F');
+    }
+
+    const desc = safeText(t.description || t.desc || '').slice(0, 28);
+    const cat = safeText(getCat(t.type, t.cat).name).slice(0, 16);
+    const amt = (t.type === 'income' ? '+' : '-') + money(t.amount);
+
+    doc.setTextColor(45,45,45);
+    doc.setFontSize(9);
+    doc.setFont('helvetica','normal');
+    doc.text(String(t.date || '').slice(0,10), margin + 8, y + 16);
+    doc.text(String(t.type || ''), margin + 82, y + 16);
+    doc.text(desc, margin + 150, y + 16);
+    doc.text(cat, pageW - margin - 165, y + 16);
+
+    if(t.type === 'income') doc.setTextColor(0, 150, 70);
+    else doc.setTextColor(210, 50, 50);
+
+    doc.setFont('helvetica','bold');
+    doc.text(amt, pageW - margin - 8, y + 16, {align:'right'});
+    y += 24;
+  });
+
+  addFooter();
+  doc.save(`MonieTrack_Statement_${selectedMonth}.pdf`);
+  toast('PDF statement downloaded ✅');
+}
+
 
 function exportData(){
   toast('Export to PDF — PRO feature coming soon! 📊');
