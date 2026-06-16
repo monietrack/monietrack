@@ -10,14 +10,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="MonieTrack"/>
-<link rel="manifest" href="manifest.json"/>
-<link rel="apple-touch-icon" href="monietrack_icon_192.png"/>
-<link rel="icon" type="image/png" sizes="512x512" href="monietrack_icon_512.png"/>
-<link rel="icon" type="image/png" sizes="192x192" href="monietrack_icon_192.png"/>
-<link rel="shortcut icon" href="monietrack_icon_192.png"/>
-<link rel="icon" href="favicon.ico" sizes="any"/>
+<link rel="manifest" href="/manifest.json?v=5"/>
+<link rel="apple-touch-icon" href="/monietrack_icon_192.png?v=5"/>
+<link rel="icon" type="image/png" sizes="512x512" href="/monietrack_icon_512.png?v=5"/>
+<link rel="icon" type="image/png" sizes="192x192" href="/monietrack_icon_192.png?v=5"/>
+<link rel="shortcut icon" href="/monietrack_icon_192.png?v=5"/>
+<link rel="icon" href="/favicon.ico?v=5" sizes="any"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <style>
 :root{
   --green:#00C853;--gold:#F5A623;--red:#E53935;--blue:#2196F3;
@@ -125,150 +124,31 @@ a{color:inherit;text-decoration:none;}
 .goal-add-btn{background:var(--card);border:1px dashed var(--border2);border-radius:var(--radius-s);padding:14px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;color:var(--ink3);font-size:13px;font-weight:600;}
 
 
-
-/* ── PDF REPORT ── */
-.report-btn{
-  width:100%;
-  background:linear-gradient(135deg,var(--green),#009944);
-  border:none;
-  color:#fff;
-  border-radius:11px;
-  padding:14px;
-  font-size:13px;
-  font-weight:900;
-  font-family:var(--font);
-  cursor:pointer;
-  margin-bottom:12px;
-  box-shadow:0 4px 12px rgba(0,200,83,.2);
-}
-.report-btn:active{transform:scale(.98);}
-.month-select-row{
-  display:flex;
-  gap:8px;
-  margin-bottom:12px;
-}
-.month-select-row .fi{
-  flex:1;
-  padding:10px 12px;
-  font-size:13px;
-}
-.report-note{
-  font-size:11px;
-  color:var(--ink3);
-  line-height:1.5;
-  text-align:center;
-  margin-top:-4px;
-  margin-bottom:16px;
-}
-
 /* ── ANALYTICS ── */
-.analytics-card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:14px;
-  margin-bottom:18px;
-}
-.analytics-grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:8px;
-  margin-bottom:12px;
-}
-.analytics-mini{
-  background:var(--bg3);
-  border:1px solid var(--border2);
-  border-radius:10px;
-  padding:11px 8px;
-}
-.analytics-lbl{
-  font-size:9px;
-  color:var(--ink3);
-  font-weight:800;
-  letter-spacing:.09em;
-  text-transform:uppercase;
-}
-.analytics-val{
-  font-size:14px;
-  font-weight:900;
-  margin-top:4px;
-}
-.cat-row{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:9px 0;
-  border-bottom:1px solid var(--border);
-}
+.analytics-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:18px;}
+.analytics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.analytics-mini{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:11px 8px;}
+.analytics-lbl{font-size:9px;color:var(--ink3);font-weight:800;letter-spacing:.09em;text-transform:uppercase;}
+.analytics-val{font-size:14px;font-weight:900;margin-top:4px;}
+.cat-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
 .cat-row:last-child{border-bottom:none;}
-.cat-ico{
-  width:34px;
-  height:34px;
-  border-radius:9px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:rgba(0,200,83,.10);
-  font-size:17px;
-  flex-shrink:0;
-}
+.cat-ico{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:rgba(0,200,83,.10);font-size:17px;flex-shrink:0;}
 .cat-info{flex:1;min-width:0;}
-.cat-name{
-  font-size:12px;
-  font-weight:800;
-  margin-bottom:5px;
-}
-.cat-bar{
-  height:5px;
-  background:var(--border2);
-  border-radius:4px;
-  overflow:hidden;
-}
-.cat-fill{
-  height:100%;
-  background:var(--green);
-  border-radius:4px;
-}
-.cat-money{
-  font-size:12px;
-  font-weight:900;
-  color:var(--red);
-}
-.export-btn{
-  width:100%;
-  background:var(--card);
-  border:1px solid var(--border2);
-  color:var(--green);
-  border-radius:11px;
-  padding:13px;
-  font-size:13px;
-  font-weight:800;
-  font-family:var(--font);
-  cursor:pointer;
-  margin-bottom:18px;
-}
+.cat-name{font-size:12px;font-weight:800;margin-bottom:5px;}
+.cat-bar{height:5px;background:var(--border2);border-radius:4px;overflow:hidden;}
+.cat-fill{height:100%;background:var(--green);border-radius:4px;}
+.cat-money{font-size:12px;font-weight:900;color:var(--red);}
+.export-btn{width:100%;background:var(--card);border:1px solid var(--border2);color:var(--green);border-radius:11px;padding:13px;font-size:13px;font-weight:800;font-family:var(--font);cursor:pointer;margin-bottom:18px;}
 .export-btn:active{transform:scale(.98);}
 
+/* ── PDF REPORT ── */
+.report-btn{width:100%;background:linear-gradient(135deg,var(--green),#009944);border:none;color:#fff;border-radius:11px;padding:14px;font-size:13px;font-weight:900;font-family:var(--font);cursor:pointer;margin-bottom:12px;box-shadow:0 4px 12px rgba(0,200,83,.2);}
+.report-btn:active{transform:scale(.98);}
+.month-select-row{display:flex;gap:8px;margin-bottom:12px;}
+.month-select-row .fi{flex:1;padding:10px 12px;font-size:13px;}
+.report-note{font-size:11px;color:var(--ink3);line-height:1.5;text-align:center;margin-top:-4px;margin-bottom:16px;}
 
-
-/* ── BILL CLOUD SYNC ── */
-.bill-cloud-badge{font-size:9px;font-weight:900;letter-spacing:.08em;padding:3px 7px;border-radius:12px;background:rgba(0,200,83,.12);color:var(--green);margin-left:6px;}
-.bill-mini-note{font-size:11px;color:var(--ink3);line-height:1.45;margin-bottom:12px;}
-
-
-/* ── EXCEEDED GOALS ── */
-.goal-pct.exceeded{color:var(--gold);}
-.goal-excess{
-  font-size:11px;
-  font-weight:800;
-  color:var(--gold);
-  margin-top:4px;
-}
-.goal-fill.exceeded{
-  background:var(--gold);
-}
-
-/* ── GOAL CONTRIBUTIONS ── */
+/* ── GOAL CONTRIBUTIONS + EXCEEDED GOALS ── */
 .goal{cursor:pointer;}
 .goal-actions{display:flex;gap:6px;margin-top:10px;}
 .goal-small-btn{flex:1;border:none;border-radius:8px;padding:8px 6px;font-size:11px;font-weight:800;font-family:var(--font);cursor:pointer;}
@@ -283,6 +163,13 @@ a{color:inherit;text-decoration:none;}
 .goal-stat{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:10px 8px;}
 .goal-stat-lbl{font-size:9px;color:var(--ink3);font-weight:800;letter-spacing:.08em;text-transform:uppercase;}
 .goal-stat-val{font-size:13px;font-weight:900;margin-top:4px;}
+.goal-pct.exceeded{color:var(--gold);}
+.goal-excess{font-size:11px;font-weight:800;color:var(--gold);margin-top:4px;}
+.goal-fill.exceeded{background:var(--gold);}
+
+/* ── BILL CLOUD SYNC ── */
+.bill-cloud-badge{font-size:9px;font-weight:900;letter-spacing:.08em;padding:3px 7px;border-radius:12px;background:rgba(0,200,83,.12);color:var(--green);margin-left:6px;}
+.bill-mini-note{font-size:11px;color:var(--ink3);line-height:1.45;margin-bottom:12px;}
 
 /* ── CALCULATOR ── */
 .calc-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px;}
@@ -548,13 +435,6 @@ a{color:inherit;text-decoration:none;}
       <button class="report-btn" onclick="downloadMonthlyPDF()">📄 Download Monthly PDF Statement</button>
       <button class="export-btn" onclick="exportCSV()">📤 Download Transactions CSV</button>
       <div class="report-note">PDF includes income, expenses, net balance, category summary and transaction table.</div>
-    </div>
-
-    <div class="pro-gate">
-      <div class="pro-ico">⭐</div>
-      <div class="pro-title">Coming Pro Features</div>
-      <div class="pro-sub">Next: branded PDF reports, unlimited history, smart insights and budget warnings.</div>
-      <button class="pro-btn" onclick="toast('Pro plan coming soon 🚀')">Coming Soon</button>
     </div>
   </div>
 
@@ -909,8 +789,8 @@ async function migrateLocalToSupabase(){
             user_id: user.id,
             type: t.type,
             amount: Number(t.amount),
-            description: t.description || t.desc || '',
-            cat: t.cat || 'other',
+            description: t.description||t.desc||'',
+            cat: t.cat||'other',
             date: t.date
           };
           const {error} = await sb.from('transactions').upsert(row);
@@ -929,8 +809,8 @@ async function migrateLocalToSupabase(){
           const row = {
             user_id: user.id,
             cat: b.cat,
-            budget_limit: Number(b.budget_limit || b.limit || 0),
-            icon: b.icon || '📦'
+            budget_limit: Number(b.budget_limit||b.limit||0),
+            icon: b.icon||'📦'
           };
           await sb.from('budgets').upsert(row);
         }
@@ -946,9 +826,9 @@ async function migrateLocalToSupabase(){
           const row = {
             user_id: user.id,
             name: g.name,
-            icon: g.icon || '💰',
+            icon: g.icon||'💰',
             target: Number(g.target),
-            saved: Number(g.saved || 0)
+            saved: Number(g.saved||0)
           };
           await sb.from('goals').upsert(row);
         }
@@ -960,33 +840,21 @@ async function migrateLocalToSupabase(){
 async function startApp(){
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('app').style.display='flex';
+  // Migrate local data to Supabase if logged in
+  await migrateLocalToSupabase();
+  loadRates();
+  await loadBills();
+  renderAll();
   document.getElementById('tx-date').value = today();
   const reportMonthEl = document.getElementById('report-month');
   if(reportMonthEl) reportMonthEl.value = new Date().toISOString().slice(0,7);
   setType('income');
   const mo = new Date().toLocaleString('en-NG',{month:'long',year:'numeric'});
   document.getElementById('bal-month').textContent = mo;
-  // Show loading state
-  document.getElementById('bal-amt').textContent='Loading...';
-  // Load rates in background
-  loadRates();
-  await loadBills();
-  // Wait for Supabase data FIRST then render
-  if(user && !useLocal){
-    try{
-      // Clear localStorage so old data doesn't show
-      if(!useLocal) {
-        localStorage.removeItem('mt_tx');
-        localStorage.removeItem('mt_bud');
-        localStorage.removeItem('mt_goals');
-      }
-    }catch(e){}
-  }
-  await renderAll();
 }
 
 // ── SUPABASE DB ──
-// UUID FIX: Supabase generates id automatically. Do NOT send id: Date.now().
+// UUID FIX: Supabase generates id automatically. Do NOT send id: Date.now() to UUID tables.
 
 async function getTx(){
   if(useLocal || !user) return LS.get('tx',[]);
@@ -1003,7 +871,6 @@ async function getTx(){
     return [];
   }
 
-  console.log('FETCHED TX:', data);
   return data || [];
 }
 
@@ -1024,8 +891,6 @@ async function addTxDB(tx){
     date: tx.date
   };
 
-  console.log('INSERTING TX:', row);
-
   const { data, error } = await sb
     .from('transactions')
     .insert(row)
@@ -1038,7 +903,6 @@ async function addTxDB(tx){
     throw error;
   }
 
-  console.log('INSERTED TX:', data);
   return data;
 }
 
@@ -1063,7 +927,7 @@ async function saveBudDB(b){
   if(useLocal || !user){
     const l = LS.get('bud',[]);
     const i = l.findIndex(x => x.cat === b.cat);
-    const localRow = { ...b, id: b.id || Date.now() };
+    const localRow = { ...b, id: b.id  };
     if(i >= 0) l[i] = localRow; else l.push(localRow);
     LS.set('bud', l);
     return;
@@ -1097,7 +961,8 @@ async function getGoals(){
   const { data, error } = await sb
     .from('goals')
     .select('*')
-    .eq('user_id', user.id);
+    .eq('user_id', user.id)
+    .order('created_at', { ascending:false });
 
   if(error){
     console.error('FETCH GOALS ERROR:', error);
@@ -1323,7 +1188,6 @@ function renderAllBud(txs,buds){
   el.innerHTML=buds.map(b=>budHTML(b,txs)).join('')||'<div class="empty"><div class="empty-ico">📊</div><div class="empty-txt">No budgets set.<br>Tap ＋ Add to create one.</div></div>';
 }
 
-
 function renderGoals(gls){
   const FREE=2;
   let html=gls.map(g=>{
@@ -1447,10 +1311,7 @@ async function openGoalDetail(goalId){
       <div class="goal-stat-grid">
         <div class="goal-stat"><div class="goal-stat-lbl">Target</div><div class="goal-stat-val">${fmt(target)}</div></div>
         <div class="goal-stat"><div class="goal-stat-lbl">Saved</div><div class="goal-stat-val" style="color:var(--green)">${fmt(saved)}</div></div>
-        <div class="goal-stat">
-          <div class="goal-stat-lbl">${exceeded?'Extra':'Left'}</div>
-          <div class="goal-stat-val" style="color:${exceeded?'var(--gold)':'var(--gold)'}">${fmt(exceeded?excess:remaining)}</div>
-        </div>
+        <div class="goal-stat"><div class="goal-stat-lbl">${exceeded?'Extra':'Left'}</div><div class="goal-stat-val" style="color:var(--gold)">${fmt(exceeded?excess:remaining)}</div></div>
       </div>
       ${exceeded?`<div class="goal-excess" style="margin-bottom:10px;">You passed this goal by ${fmt(excess)} 🎉</div>`:''}
       <button class="sub-btn" onclick="hideModal('goal-detail-modal');openGoalContribution('${g.id}')">＋ Add Contribution</button>
@@ -1672,45 +1533,85 @@ async function saveGoal(){
   renderAll();
 }
 
-// ── CALCULATOR ──
-function setCurr(code,sym){
-  currCode=code;
-  document.querySelectorAll('.curr-btn').forEach(b=>b.classList.remove('on'));
-  document.getElementById('c-'+code).classList.add('on');
-  document.getElementById('f-lbl').textContent=code;
-  document.getElementById('f-sym').textContent=sym;
-  document.getElementById('live-rate').textContent='1 '+code+' = ₦'+rates[code].toLocaleString();
-  document.getElementById('f-in').value='';
-  document.getElementById('n-in').value='';
-}
-function fromForeign(){
-  const v=parseFloat(document.getElementById('f-in').value)||0;
-  document.getElementById('n-in').value=v?Math.round(v*rates[currCode]):'';
-}
-function fromNaira(){
-  const v=parseFloat(document.getElementById('n-in').value)||0;
-  document.getElementById('f-in').value=v?(v/rates[currCode]).toFixed(2):'';
+
+function renderAnalytics(txs){
+  const income = txs.filter(t => t.type === 'income').reduce((s,t) => s + Number(t.amount || 0), 0);
+  const expense = txs.filter(t => t.type === 'expense').reduce((s,t) => s + Number(t.amount || 0), 0);
+  const net = income - expense;
+
+  const ai = document.getElementById('a-income');
+  const ae = document.getElementById('a-expense');
+  const an = document.getElementById('a-net');
+  const catsEl = document.getElementById('analytics-cats');
+  if(!ai || !ae || !an || !catsEl) return;
+
+  ai.textContent = fmt(income);
+  ae.textContent = fmt(expense);
+  an.textContent = fmt(net);
+  an.style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const byCat = {};
+  txs.filter(t => t.type === 'expense').forEach(t => {
+    const key = t.cat || 'other';
+    byCat[key] = (byCat[key] || 0) + Number(t.amount || 0);
+  });
+
+  const rows = Object.entries(byCat).sort((a,b) => b[1] - a[1]).slice(0,6);
+
+  if(!rows.length){
+    catsEl.innerHTML = '<div class="empty"><div class="empty-ico">📈</div><div class="empty-txt">No expense data yet.<br>Add expenses to see analytics.</div></div>';
+    return;
+  }
+
+  const max = Math.max(...rows.map(r => r[1]), 1);
+
+  catsEl.innerHTML = rows.map(([cat, amount]) => {
+    const c = getCat('expense', cat);
+    const pct = Math.max(4, Math.round((amount / max) * 100));
+    return `<div class="cat-row">
+      <div class="cat-ico">${c.icon}</div>
+      <div class="cat-info">
+        <div class="cat-name">${c.name}</div>
+        <div class="cat-bar"><div class="cat-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="cat-money">${fmt(amount)}</div>
+    </div>`;
+  }).join('');
 }
 
-// ── UPGRADE ──
-function upgradePro(){toast('PRO via Flutterwave — coming soon! 🚀');}
+async function exportCSV(){
+  const txs = await getTx();
+  if(!txs.length){
+    toast('No transactions to export yet');
+    return;
+  }
 
-// ── PROFILE MENU ──
-function toggleProfileMenu(){
-  const menu = document.getElementById('profile-menu');
-  menu.classList.toggle('on');
-  // Update user info
-  const u = user || {};
-  document.getElementById('pm-email').textContent = u.email || 'Local mode (no account)';
-  document.getElementById('pm-name').textContent = u.email ? u.email.split('@')[0] : 'Guest';
+  const headers = ['date','type','amount','description','category'];
+  const rows = txs.map(t => [
+    t.date || '',
+    t.type || '',
+    String(t.amount || 0),
+    (t.description || t.desc || '').replaceAll('"','""'),
+    t.cat || ''
+  ]);
+
+  const csv = [
+    headers.join(','),
+    ...rows.map(r => r.map(v => `"${v}"`).join(','))
+  ].join('\n');
+
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `monietrack_transactions_${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast('CSV downloaded ✅');
 }
-
-async function signOut(){
-  if(!useLocal) await sb.auth.signOut();
-  // Force clean reload — simplest and most reliable
-  window.location.reload();
-}
-
 
 async function downloadMonthlyPDF(){
   if(typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF){
@@ -1750,12 +1651,8 @@ async function downloadMonthlyPDF(){
   const margin = 40;
   let y = 42;
 
-  function money(n){
-    return 'NGN ' + Number(n || 0).toLocaleString('en-NG', {maximumFractionDigits:0});
-  }
-  function safeText(v){
-    return String(v || '').replace(/[₦]/g, 'NGN ');
-  }
+  function money(n){ return 'NGN ' + Number(n || 0).toLocaleString('en-NG', {maximumFractionDigits:0}); }
+  function safeText(v){ return String(v || '').replace(/[₦]/g, 'NGN '); }
   function addFooter(){
     doc.setFontSize(9);
     doc.setTextColor(130,130,130);
@@ -1774,12 +1671,10 @@ async function downloadMonthlyPDF(){
   doc.setFontSize(24);
   doc.setFont('helvetica','bold');
   doc.text('MonieTrack', margin + 58, y + 20);
-
   doc.setTextColor(90,90,90);
   doc.setFontSize(10);
   doc.setFont('helvetica','normal');
   doc.text('Monthly Financial Statement', margin + 58, y + 38);
-
   doc.setFontSize(11);
   doc.text('Account: ' + (user?.email || 'Local User'), pageW - margin, y + 18, {align:'right'});
   doc.text('Period: ' + selectedMonth, pageW - margin, y + 36, {align:'right'});
@@ -1839,7 +1734,6 @@ async function downloadMonthlyPDF(){
   }
 
   y += 18;
-
   doc.setTextColor(20,20,20);
   doc.setFontSize(14);
   doc.setFont('helvetica','bold');
@@ -1900,6 +1794,45 @@ async function downloadMonthlyPDF(){
   toast('PDF statement downloaded ✅');
 }
 
+
+// ── CALCULATOR ──
+function setCurr(code,sym){
+  currCode=code;
+  document.querySelectorAll('.curr-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('c-'+code).classList.add('on');
+  document.getElementById('f-lbl').textContent=code;
+  document.getElementById('f-sym').textContent=sym;
+  document.getElementById('live-rate').textContent='1 '+code+' = ₦'+rates[code].toLocaleString();
+  document.getElementById('f-in').value='';
+  document.getElementById('n-in').value='';
+}
+function fromForeign(){
+  const v=parseFloat(document.getElementById('f-in').value)||0;
+  document.getElementById('n-in').value=v?Math.round(v*rates[currCode]):'';
+}
+function fromNaira(){
+  const v=parseFloat(document.getElementById('n-in').value)||0;
+  document.getElementById('f-in').value=v?(v/rates[currCode]).toFixed(2):'';
+}
+
+// ── UPGRADE ──
+function upgradePro(){toast('PRO via Flutterwave — coming soon! 🚀');}
+
+// ── PROFILE MENU ──
+function toggleProfileMenu(){
+  const menu = document.getElementById('profile-menu');
+  menu.classList.toggle('on');
+  // Update user info
+  const u = user || {};
+  document.getElementById('pm-email').textContent = u.email || 'Local mode (no account)';
+  document.getElementById('pm-name').textContent = u.email ? u.email.split('@')[0] : 'Guest';
+}
+
+async function signOut(){
+  if(!useLocal) await sb.auth.signOut();
+  // Force clean reload — simplest and most reliable
+  window.location.reload();
+}
 
 function exportData(){
   toast('Export to PDF — PRO feature coming soon! 📊');
