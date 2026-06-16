@@ -667,12 +667,11 @@ async function migrateLocalToSupabase(){
         let saved = 0;
         for(const t of localTxData){
           const row = {
-            id: Number(t.id),
             user_id: user.id,
             type: t.type,
             amount: Number(t.amount),
-            description: t.description||t.desc||'',
-            cat: t.cat||'other',
+            description: t.description || t.desc || '',
+            cat: t.cat || 'other',
             date: t.date
           };
           const {error} = await sb.from('transactions').upsert(row);
@@ -689,11 +688,10 @@ async function migrateLocalToSupabase(){
       if(!existing||existing.length===0){
         for(const b of localBudData){
           const row = {
-            id: Number(b.id)||Date.now(),
             user_id: user.id,
             cat: b.cat,
-            budget_limit: Number(b.budget_limit||b.limit||0),
-            icon: b.icon||'📦'
+            budget_limit: Number(b.budget_limit || b.limit || 0),
+            icon: b.icon || '📦'
           };
           await sb.from('budgets').upsert(row);
         }
@@ -707,12 +705,11 @@ async function migrateLocalToSupabase(){
       if(!existing||existing.length===0){
         for(const g of localGoalsData){
           const row = {
-            id: Number(g.id)||Date.now(),
             user_id: user.id,
             name: g.name,
-            icon: g.icon||'💰',
+            icon: g.icon || '💰',
             target: Number(g.target),
-            saved: Number(g.saved||0)
+            saved: Number(g.saved || 0)
           };
           await sb.from('goals').upsert(row);
         }
@@ -748,67 +745,210 @@ async function startApp(){
 }
 
 // ── SUPABASE DB ──
-// ── SUPABASE FIRST — uuid ids, no RLS ──
+// UUID FIX: Supabase generates id automatically. Do NOT send id: Date.now().
+
 async function getTx(){
-  if(useLocal||!user) return LS.get('tx',[]);
-  const {data,error} = await sb.from('transactions').select('*').eq('user_id',user.id).order('date',{ascending:false});
-  if(error){ console.log('getTx error:',error.message); return []; }
-  return data||[];
+  if(useLocal || !user) return LS.get('tx',[]);
+
+  const { data, error } = await sb
+    .from('transactions')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('date', { ascending:false });
+
+  if(error){
+    console.error('FETCH TX ERROR:', error);
+    toast('⚠️ Could not load transactions: ' + error.message);
+    return [];
+  }
+
+  console.log('FETCHED TX:', data);
+  return data || [];
 }
+
 async function addTxDB(tx){
-  if(useLocal||!user){ const l=LS.get('tx',[]); l.unshift(tx); LS.set('tx',l); return; }
-  // Let Supabase generate the UUID — do NOT send id
-  const {data,error} = await sb.from('transactions').insert({
-    user_id:user.id,
-    type:tx.type,
-    amount:Number(tx.amount),
-    description:tx.description||tx.desc||'',
-    cat:tx.cat||'other',
-    date:tx.date
-  }).select().single();
-  if(error){ console.log('INSERT ERROR:',error.message); toast('⚠️ Save failed: '+error.message); }
-  else{ console.log('INSERTED:',data); }
+  if(useLocal || !user){
+    const l = LS.get('tx',[]);
+    l.unshift({ ...tx, id: Date.now() });
+    LS.set('tx', l);
+    return;
+  }
+
+  const row = {
+    user_id: user.id,
+    type: tx.type,
+    amount: Number(tx.amount),
+    description: tx.description || tx.desc || '',
+    cat: tx.cat || 'other',
+    date: tx.date
+  };
+
+  console.log('INSERTING TX:', row);
+
+  const { data, error } = await sb
+    .from('transactions')
+    .insert(row)
+    .select()
+    .single();
+
+  if(error){
+    console.error('INSERT TX ERROR:', error);
+    toast('⚠️ Save failed: ' + error.message);
+    throw error;
+  }
+
+  console.log('INSERTED TX:', data);
+  return data;
 }
+
 async function getBud(){
-  if(useLocal||!user) return LS.get('bud',[]);
-  const {data,error} = await sb.from('budgets').select('*').eq('user_id',user.id);
-  if(error){ console.log('getBud error:',error.message); return []; }
-  return data||[];
+  if(useLocal || !user) return LS.get('bud',[]);
+
+  const { data, error } = await sb
+    .from('budgets')
+    .select('*')
+    .eq('user_id', user.id);
+
+  if(error){
+    console.error('FETCH BUDGET ERROR:', error);
+    toast('⚠️ Could not load budgets: ' + error.message);
+    return [];
+  }
+
+  return data || [];
 }
+
 async function saveBudDB(b){
-  if(useLocal||!user){ const l=LS.get('bud',[]); const i=l.findIndex(x=>x.cat===b.cat); if(i>=0)l[i]=b; else l.push(b); LS.set('bud',l); return; }
-  // Check if budget exists for this category
-  const {data:existing} = await sb.from('budgets').select('id').eq('user_id',user.id).eq('cat',b.cat).single();
-  if(existing){
-    await sb.from('budgets').update({budget_limit:Number(b.budget_limit||b.limit||0),icon:b.icon||'📦'}).eq('id',existing.id);
-  } else {
-    await sb.from('budgets').insert({user_id:user.id,cat:b.cat,budget_limit:Number(b.budget_limit||b.limit||0),icon:b.icon||'📦'});
+  if(useLocal || !user){
+    const l = LS.get('bud',[]);
+    const i = l.findIndex(x => x.cat === b.cat);
+    const localRow = { ...b, id: b.id || Date.now() };
+    if(i >= 0) l[i] = localRow; else l.push(localRow);
+    LS.set('bud', l);
+    return;
+  }
+
+  const row = {
+    user_id: user.id,
+    cat: b.cat,
+    budget_limit: Number(b.budget_limit || b.limit || 0),
+    icon: b.icon || '📦'
+  };
+
+  const { data, error } = await sb
+    .from('budgets')
+    .upsert(row, { onConflict:'user_id,cat' })
+    .select()
+    .single();
+
+  if(error){
+    console.error('UPSERT BUDGET ERROR:', error);
+    toast('⚠️ Budget save failed: ' + error.message);
+    throw error;
+  }
+
+  return data;
+}
+
+async function getGoals(){
+  if(useLocal || !user) return LS.get('goals',[]);
+
+  const { data, error } = await sb
+    .from('goals')
+    .select('*')
+    .eq('user_id', user.id);
+
+  if(error){
+    console.error('FETCH GOALS ERROR:', error);
+    toast('⚠️ Could not load goals: ' + error.message);
+    return [];
+  }
+
+  return data || [];
+}
+
+async function saveGoalDB(g){
+  if(useLocal || !user){
+    const l = LS.get('goals',[]);
+    l.push({ ...g, id: Date.now() });
+    LS.set('goals', l);
+    return;
+  }
+
+  const row = {
+    user_id: user.id,
+    name: g.name,
+    icon: g.icon || '💰',
+    target: Number(g.target),
+    saved: Number(g.saved || 0)
+  };
+
+  const { data, error } = await sb
+    .from('goals')
+    .insert(row)
+    .select()
+    .single();
+
+  if(error){
+    console.error('INSERT GOAL ERROR:', error);
+    toast('⚠️ Goal save failed: ' + error.message);
+    throw error;
+  }
+
+  return data;
+}
+
+async function deleteTxDB(id){
+  if(useLocal || !user){
+    let l = LS.get('tx',[]);
+    l = l.filter(x => String(x.id) !== String(id));
+    LS.set('tx', l);
+    return;
+  }
+
+  const { error } = await sb
+    .from('transactions')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id);
+
+  if(error){
+    console.error('DELETE TX ERROR:', error);
+    toast('⚠️ Delete failed: ' + error.message);
+    throw error;
   }
 }
-async function getGoals(){
-  if(useLocal||!user) return LS.get('goals',[]);
-  const {data,error} = await sb.from('goals').select('*').eq('user_id',user.id);
-  if(error){ console.log('getGoals error:',error.message); return []; }
-  return data||[];
-}
-async function saveGoalDB(g){
-  if(useLocal||!user){ const l=LS.get('goals',[]); l.push(g); LS.set('goals',l); return; }
-  const {error} = await sb.from('goals').insert({
-    user_id:user.id,
-    name:g.name,
-    icon:g.icon||'💰',
-    target:Number(g.target),
-    saved:Number(g.saved||0)
-  });
-  if(error) console.log('saveGoal error:',error.message);
-}
-async function deleteTxDB(id){
-  if(useLocal||!user){ let l=LS.get('tx',[]); l=l.filter(x=>String(x.id)!==String(id)); LS.set('tx',l); return; }
-  await sb.from('transactions').delete().eq('id',id).eq('user_id',user.id);
-}
+
 async function updateTxDB(id,updates){
-  if(useLocal||!user){ const l=LS.get('tx',[]); const i=l.findIndex(x=>String(x.id)===String(id)); if(i>=0){l[i]={...l[i],...updates}; LS.set('tx',l);} return; }
-  await sb.from('transactions').update({amount:Number(updates.amount),description:updates.description,date:updates.date}).eq('id',id).eq('user_id',user.id);
+  if(useLocal || !user){
+    const l = LS.get('tx',[]);
+    const i = l.findIndex(x => String(x.id) === String(id));
+    if(i >= 0){
+      l[i] = { ...l[i], ...updates };
+      LS.set('tx', l);
+    }
+    return;
+  }
+
+  const { data, error } = await sb
+    .from('transactions')
+    .update({
+      amount: Number(updates.amount),
+      description: updates.description,
+      date: updates.date
+    })
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .select()
+    .single();
+
+  if(error){
+    console.error('UPDATE TX ERROR:', error);
+    toast('⚠️ Update failed: ' + error.message);
+    throw error;
+  }
+
+  return data;
 }
 
 // ── RATES ──
@@ -1054,7 +1194,7 @@ async function saveTx(){
   if(!desc){toast('Add a description ⚠️');return;}
   const btn=document.getElementById('save-tx-btn');
   btn.disabled=true; btn.textContent='Saving...';
-  await addTxDB({type:txType,amount:amt,description:desc,cat:selCat,date,id:Date.now()});
+  await addTxDB({type:txType,amount:amt,description:desc,cat:selCat,date});
   btn.disabled=false; btn.textContent='Save Transaction';
   hideModal('add-modal');
   document.getElementById('tx-amt').value='';
@@ -1068,7 +1208,7 @@ async function saveBudget(){
   const limit=parseFloat(document.getElementById('bud-amt').value);
   if(!limit||limit<=0){toast('Enter a valid amount ⚠️');return;}
   const ico=BUD_CATS[cat]||'📦';
-  await saveBudDB({cat,budget_limit:limit,icon:ico,id:Date.now()});
+  await saveBudDB({cat,budget_limit:limit,icon:ico});
   hideModal('bud-modal');
   document.getElementById('bud-amt').value='';
   toast('Budget saved! 📊');
@@ -1086,7 +1226,7 @@ async function saveGoal(){
   const target=parseFloat(document.getElementById('g-target').value);
   if(!name){toast('Enter a goal name ⚠️');return;}
   if(!target||target<=0){toast('Enter a target amount ⚠️');return;}
-  await saveGoalDB({name,icon:goalIco,target,saved:0,id:Date.now()});
+  await saveGoalDB({name,icon:goalIco,target,saved:0});
   hideModal('goal-modal');
   document.getElementById('g-name').value='';
   document.getElementById('g-target').value='';
