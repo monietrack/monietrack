@@ -255,6 +255,19 @@ a{color:inherit;text-decoration:none;}
 .bill-cloud-badge{font-size:9px;font-weight:900;letter-spacing:.08em;padding:3px 7px;border-radius:12px;background:rgba(0,200,83,.12);color:var(--green);margin-left:6px;}
 .bill-mini-note{font-size:11px;color:var(--ink3);line-height:1.45;margin-bottom:12px;}
 
+
+/* ── EXCEEDED GOALS ── */
+.goal-pct.exceeded{color:var(--gold);}
+.goal-excess{
+  font-size:11px;
+  font-weight:800;
+  color:var(--gold);
+  margin-top:4px;
+}
+.goal-fill.exceeded{
+  background:var(--gold);
+}
+
 /* ── GOAL CONTRIBUTIONS ── */
 .goal{cursor:pointer;}
 .goal-actions{display:flex;gap:6px;margin-top:10px;}
@@ -591,8 +604,8 @@ a{color:inherit;text-decoration:none;}
   <button class="ni on" data-v="home" onclick="sv('home')"><div class="ni-ico">🏠</div><div class="ni-lbl">Home</div></button>
   <button class="ni" data-v="transactions" onclick="sv('transactions')"><div class="ni-ico">📋</div><div class="ni-lbl">History</div></button>
   <button class="ni" data-v="budget" onclick="sv('budget')"><div class="ni-ico">📊</div><div class="ni-lbl">Budget</div></button>
+  <button class="ni" data-v="bills" onclick="sv('bills')"><div class="ni-ico">🔔</div><div class="ni-lbl">Bills</div></button>
   <button class="ni" data-v="analytics" onclick="sv('analytics')"><div class="ni-ico">📈</div><div class="ni-lbl">Analytics</div></button>
-  <button class="ni" data-v="calc" onclick="sv('calc')"><div class="ni-ico">💱</div><div class="ni-lbl">Convert</div></button>
 </nav>
 <!-- BILL MODAL -->
 <div class="overlay" id="bill-modal" onclick="if(event.target===this)hideModal('bill-modal')">
@@ -1314,13 +1327,20 @@ function renderAllBud(txs,buds){
 function renderGoals(gls){
   const FREE=2;
   let html=gls.map(g=>{
-    const pct=Math.min(100,Math.round(Number(g.saved||0)/Number(g.target)*100))||0;
+    const target = Number(g.target || 0);
+    const saved = Number(g.saved || 0);
+    const rawPct = target > 0 ? Math.round((saved / target) * 100) : 0;
+    const pct=Math.min(100, rawPct);
+    const exceeded = target > 0 && saved > target;
+    const excess = exceeded ? saved - target : 0;
+
     return`<div class="goal" onclick="openGoalDetail('${g.id}')">
       <div class="goal-ico">${g.icon}</div>
       <div class="goal-name">${g.name}</div>
-      <div class="goal-prog">${fmt(g.saved)} of ${fmt(g.target)}</div>
-      <div class="goal-bar"><div class="goal-fill" style="width:${pct}%"></div></div>
-      <div class="goal-pct">${pct}% complete</div>
+      <div class="goal-prog">${fmt(saved)} of ${fmt(target)}</div>
+      <div class="goal-bar"><div class="goal-fill ${exceeded?'exceeded':''}" style="width:${pct}%"></div></div>
+      <div class="goal-pct ${exceeded?'exceeded':''}">${exceeded?'Goal exceeded 🎉':pct+'% complete'}</div>
+      ${exceeded?`<div class="goal-excess">Extra saved: ${fmt(excess)}</div>`:''}
       <div class="goal-actions">
         <button class="goal-small-btn goal-add-money" onclick="event.stopPropagation();openGoalContribution('${g.id}')">＋ Add</button>
         <button class="goal-small-btn goal-view-btn" onclick="event.stopPropagation();openGoalDetail('${g.id}')">View</button>
@@ -1343,17 +1363,25 @@ async function openGoalContribution(goalId){
   document.getElementById('contrib-date').value = today();
   document.getElementById('contrib-amount').value = '';
   document.getElementById('contrib-note').value = '';
-  const pct = Math.min(100,Math.round(Number(g.saved||0)/Number(g.target)*100))||0;
+
+  const target = Number(g.target || 0);
+  const saved = Number(g.saved || 0);
+  const rawPct = target > 0 ? Math.round((saved / target) * 100) : 0;
+  const pct = Math.min(100, rawPct);
+  const exceeded = target > 0 && saved > target;
+  const excess = exceeded ? saved - target : 0;
+
   document.getElementById('contrib-goal-summary').innerHTML = `
     <div class="goal-detail-top">
       <div class="goal-detail-icon">${g.icon}</div>
       <div>
         <div class="goal-detail-name">${g.name}</div>
-        <div class="goal-detail-sub">${fmt(g.saved)} saved of ${fmt(g.target)}</div>
+        <div class="goal-detail-sub">${fmt(saved)} saved of ${fmt(target)}</div>
       </div>
     </div>
-    <div class="goal-bar"><div class="goal-fill" style="width:${pct}%"></div></div>
-    <div class="goal-pct" style="margin-top:6px;">${pct}% complete</div>`;
+    <div class="goal-bar"><div class="goal-fill ${exceeded?'exceeded':''}" style="width:${pct}%"></div></div>
+    <div class="goal-pct ${exceeded?'exceeded':''}" style="margin-top:6px;">${exceeded?'Goal exceeded 🎉':pct+'% complete'}</div>
+    ${exceeded?`<div class="goal-excess">Extra saved: ${fmt(excess)}</div>`:''}`;
   showModal('goal-contrib-modal');
 }
 
@@ -1397,23 +1425,34 @@ async function openGoalDetail(goalId){
   const gls = await getGoals();
   const g = gls.find(x => String(x.id) === String(goalId));
   if(!g) return;
-  const pct = Math.min(100,Math.round(Number(g.saved||0)/Number(g.target)*100))||0;
-  const remaining = Math.max(0, Number(g.target || 0) - Number(g.saved || 0));
+
+  const target = Number(g.target || 0);
+  const saved = Number(g.saved || 0);
+  const rawPct = target > 0 ? Math.round((saved / target) * 100) : 0;
+  const pct = Math.min(100, rawPct);
+  const exceeded = target > 0 && saved > target;
+  const remaining = Math.max(0, target - saved);
+  const excess = exceeded ? saved - target : 0;
+
   document.getElementById('goal-detail-content').innerHTML = `
     <div class="goal-detail-card">
       <div class="goal-detail-top">
         <div class="goal-detail-icon">${g.icon}</div>
         <div>
           <div class="goal-detail-name">${g.name}</div>
-          <div class="goal-detail-sub">${pct}% complete</div>
+          <div class="goal-detail-sub">${exceeded?'Goal exceeded 🎉':pct+'% complete'}</div>
         </div>
       </div>
-      <div class="goal-bar"><div class="goal-fill" style="width:${pct}%"></div></div>
+      <div class="goal-bar"><div class="goal-fill ${exceeded?'exceeded':''}" style="width:${pct}%"></div></div>
       <div class="goal-stat-grid">
-        <div class="goal-stat"><div class="goal-stat-lbl">Target</div><div class="goal-stat-val">${fmt(g.target)}</div></div>
-        <div class="goal-stat"><div class="goal-stat-lbl">Saved</div><div class="goal-stat-val" style="color:var(--green)">${fmt(g.saved)}</div></div>
-        <div class="goal-stat"><div class="goal-stat-lbl">Left</div><div class="goal-stat-val" style="color:var(--gold)">${fmt(remaining)}</div></div>
+        <div class="goal-stat"><div class="goal-stat-lbl">Target</div><div class="goal-stat-val">${fmt(target)}</div></div>
+        <div class="goal-stat"><div class="goal-stat-lbl">Saved</div><div class="goal-stat-val" style="color:var(--green)">${fmt(saved)}</div></div>
+        <div class="goal-stat">
+          <div class="goal-stat-lbl">${exceeded?'Extra':'Left'}</div>
+          <div class="goal-stat-val" style="color:${exceeded?'var(--gold)':'var(--gold)'}">${fmt(exceeded?excess:remaining)}</div>
+        </div>
       </div>
+      ${exceeded?`<div class="goal-excess" style="margin-bottom:10px;">You passed this goal by ${fmt(excess)} 🎉</div>`:''}
       <button class="sub-btn" onclick="hideModal('goal-detail-modal');openGoalContribution('${g.id}')">＋ Add Contribution</button>
     </div>
     <div class="empty"><div class="empty-ico">💰</div><div class="empty-txt">Saved amount updates instantly.<br>Contribution history can be added next.</div></div>`;
