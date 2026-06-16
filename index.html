@@ -628,9 +628,49 @@ function skipAuth(){
   startApp();
 }
 
-function startApp(){
+async function migrateLocalToSupabase(){
+  if(useLocal || !user) return;
+  // Migrate any localStorage data up to Supabase
+  const localTxData = LS.get('tx',[]);
+  const localBudData = LS.get('bud',[]);
+  const localGoalsData = LS.get('goals',[]);
+  if(localTxData.length){
+    try{
+      // Check if user already has data in Supabase
+      const {data} = await sb.from('transactions').select('id').eq('user_id',user.id).limit(1);
+      if(!data||data.length===0){
+        // No cloud data — migrate local data up
+        const toInsert = localTxData.map(t=>({...t,user_id:user.id}));
+        await sb.from('transactions').upsert(toInsert,{onConflict:'id'});
+        toast('Your data has been synced to the cloud ☁️');
+      }
+    }catch(e){}
+  }
+  if(localBudData.length){
+    try{
+      const {data} = await sb.from('budgets').select('id').eq('user_id',user.id).limit(1);
+      if(!data||data.length===0){
+        const toInsert = localBudData.map(b=>({...b,user_id:user.id}));
+        await sb.from('budgets').upsert(toInsert,{onConflict:'id'});
+      }
+    }catch(e){}
+  }
+  if(localGoalsData.length){
+    try{
+      const {data} = await sb.from('goals').select('id').eq('user_id',user.id).limit(1);
+      if(!data||data.length===0){
+        const toInsert = localGoalsData.map(g=>({...g,user_id:user.id}));
+        await sb.from('goals').upsert(toInsert,{onConflict:'id'});
+      }
+    }catch(e){}
+  }
+}
+
+async function startApp(){
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('app').style.display='flex';
+  // Migrate local data to Supabase if logged in
+  await migrateLocalToSupabase();
   loadRates();
   loadBills();
   renderAll();
