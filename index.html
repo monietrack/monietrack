@@ -250,6 +250,11 @@ a{color:inherit;text-decoration:none;}
 .export-btn:active{transform:scale(.98);}
 
 
+
+/* ── BILL CLOUD SYNC ── */
+.bill-cloud-badge{font-size:9px;font-weight:900;letter-spacing:.08em;padding:3px 7px;border-radius:12px;background:rgba(0,200,83,.12);color:var(--green);margin-left:6px;}
+.bill-mini-note{font-size:11px;color:var(--ink3);line-height:1.45;margin-bottom:12px;}
+
 /* ── GOAL CONTRIBUTIONS ── */
 .goal{cursor:pointer;}
 .goal-actions{display:flex;gap:6px;margin-top:10px;}
@@ -484,9 +489,10 @@ a{color:inherit;text-decoration:none;}
   <!-- BILLS -->
   <div class="view" id="bills-view">
     <div class="sec" style="margin-bottom:14px;">
-      <div class="sec-t">Bill Reminders</div>
+      <div class="sec-t">Bill Reminders <span class="bill-cloud-badge" id="bill-sync-badge">CLOUD</span></div>
       <div class="sec-a" onclick="showModal('bill-modal')">＋ Add</div>
     </div>
+    <div class="bill-mini-note" id="bill-sync-note">Your bills now sync across devices when logged in.</div>
     <div class="bill-list" id="bill-list"></div>
   </div>
 
@@ -951,7 +957,7 @@ async function startApp(){
   document.getElementById('bal-amt').textContent='Loading...';
   // Load rates in background
   loadRates();
-  loadBills();
+  await loadBills();
   // Wait for Supabase data FIRST then render
   if(user && !useLocal){
     try{
@@ -1415,24 +1421,76 @@ async function openGoalDetail(goalId){
 }
 
 // ── BILLS ──
-
 let bills = [];
 
-function loadBills(){
-  bills = LS.get('bills',[]);
+async function loadBills(){
+  if(useLocal || !user){
+    bills = LS.get('bills',[]);
+    updateBillSyncBadge(false);
+    renderBills();
+    return;
+  }
+
+  const { data, error } = await sb
+    .from('bills')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending:false });
+
+  if(error){
+    console.error('FETCH BILLS ERROR:', error);
+    bills = LS.get('bills',[]);
+    updateBillSyncBadge(false);
+    toast('⚠️ Bills table not ready. Run the bills SQL.');
+    renderBills();
+    return;
+  }
+
+  bills = data || [];
+  updateBillSyncBadge(true);
   renderBills();
 }
 
-function saveBill(){
+function updateBillSyncBadge(cloud){
+  const badge = document.getElementById('bill-sync-badge');
+  const note = document.getElementById('bill-sync-note');
+  if(!badge) return;
+  badge.textContent = cloud ? 'CLOUD' : 'LOCAL';
+  badge.style.color = cloud ? 'var(--green)' : 'var(--gold)';
+  badge.style.background = cloud ? 'rgba(0,200,83,.12)' : 'rgba(245,166,35,.15)';
+  if(note){
+    note.textContent = cloud ? 'Your bills now sync across devices when logged in.' : 'Bills are saving locally. Create the bills table in Supabase for cloud sync.';
+  }
+}
+
+async function saveBill(){
   const name = document.getElementById('bill-name').value.trim();
   const amount = parseFloat(document.getElementById('bill-amount').value);
   const day = parseInt(document.getElementById('bill-day').value);
   const icon = document.getElementById('bill-cat').value;
+
   if(!name){ toast('Enter bill name ⚠️'); return; }
-  if(!amount||amount<=0){ toast('Enter valid amount ⚠️'); return; }
-  if(!day||day<1||day>31){ toast('Enter valid day (1-31) ⚠️'); return; }
-  bills.push({id:Date.now(),name,amount,day,icon});
-  LS.set('bills',bills);
+  if(!amount || amount<=0){ toast('Enter valid amount ⚠️'); return; }
+  if(!day || day<1 || day>31){ toast('Enter valid day (1-31) ⚠️'); return; }
+
+  if(useLocal || !user){
+    bills.push({ id: Date.now(), name, amount, day, icon });
+    LS.set('bills', bills);
+  } else {
+    const { data, error } = await sb
+      .from('bills')
+      .insert({ user_id:user.id, name, amount:Number(amount), day:Number(day), icon })
+      .select()
+      .single();
+
+    if(error){
+      console.error('INSERT BILL ERROR:', error);
+      toast('⚠️ Bill save failed: ' + error.message);
+      return;
+    }
+    bills.unshift(data);
+  }
+
   hideModal('bill-modal');
   document.getElementById('bill-name').value='';
   document.getElementById('bill-amount').value='';
@@ -1444,49 +1502,70 @@ function saveBill(){
 
 function renderBills(){
   const el = document.getElementById('bill-list');
+  if(!el) return;
   if(!bills.length){
     el.innerHTML='<div class="empty"><div class="empty-ico">🔔</div><div class="empty-txt">No bill reminders yet.<br>Tap ＋ Add to set one.</div></div>';
     return;
   }
-  const today = new Date();
-  const todayDay = today.getDate();
+
+  const todayObj = new Date();
+  const todayDay = todayObj.getDate();
+
   el.innerHTML = bills.map(b=>{
-    const daysUntil = b.day >= todayDay ? b.day - todayDay : (new Date(today.getFullYear(), today.getMonth()+1, b.day) - today) / 86400000;
-    const days = Math.round(daysUntil);
+    const amount = Number(b.amount || 0);
+    const day = Number(b.day || 1);
+    const daysUntil = day >= todayDay ? day - todayDay : Math.ceil((new Date(todayObj.getFullYear(), todayObj.getMonth()+1, day) - todayObj) / 86400000);
     let status, statusClass;
-    if(days===0){ status='Due TODAY!'; statusClass='due'; }
-    else if(days<=3){ status=`Due in ${days} day${days>1?'s':''}`; statusClass='soon'; }
-    else if(days<0){ status='Overdue!'; statusClass='due'; }
-    else{ status=`Due in ${days} days`; statusClass='ok'; }
+    if(daysUntil===0){ status='Due TODAY!'; statusClass='due'; }
+    else if(daysUntil<=3){ status=`Due in ${daysUntil} day${daysUntil>1?'s':''}`; statusClass='soon'; }
+    else{ status=`Due in ${daysUntil} days`; statusClass='ok'; }
+
     return`<div class="bill">
-      <div class="bill-ico">${b.icon}</div>
+      <div class="bill-ico">${b.icon || '📦'}</div>
       <div class="bill-body">
         <div class="bill-name">${b.name}</div>
-        <div class="bill-due">Every month on the ${b.day}${b.day===1?'st':b.day===2?'nd':b.day===3?'rd':'th'}</div>
+        <div class="bill-due">Every month on the ${day}${day===1?'st':day===2?'nd':day===3?'rd':'th'}</div>
         <span class="bill-status ${statusClass}">${status}</span>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-        <div class="bill-amt">${fmt(b.amount)}</div>
-        <button onclick="deleteBill(${b.id});event.stopPropagation();" style="background:rgba(229,57,53,.1);border:none;color:var(--red);font-size:11px;font-weight:700;border-radius:6px;padding:4px 8px;cursor:pointer;">Remove</button>
+        <div class="bill-amt">${fmt(amount)}</div>
+        <button onclick="deleteBill('${b.id}');event.stopPropagation();" style="background:rgba(229,57,53,.1);border:none;color:var(--red);font-size:11px;font-weight:700;border-radius:6px;padding:4px 8px;cursor:pointer;">Remove</button>
       </div>
     </div>`;
   }).join('');
 }
 
-function deleteBill(id){
-  bills = bills.filter(b=>b.id!==id);
-  LS.set('bills',bills);
+async function deleteBill(id){
+  if(useLocal || !user){
+    bills = bills.filter(b => String(b.id) !== String(id));
+    LS.set('bills', bills);
+  } else {
+    const { error } = await sb
+      .from('bills')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id);
+
+    if(error){
+      console.error('DELETE BILL ERROR:', error);
+      toast('⚠️ Delete failed: ' + error.message);
+      return;
+    }
+    bills = bills.filter(b => String(b.id) !== String(id));
+  }
+
   toast('Bill removed');
   renderBills();
 }
 
 function scheduleBillNotifications(){
-  if(!('Notification' in window)||Notification.permission!=='granted') return;
+  if(!('Notification' in window) || Notification.permission !== 'granted') return;
   const today = new Date().getDate();
   bills.forEach(b=>{
-    const days = b.day - today;
-    if(days===3||days===1||days===0){
-      const msg = days===0?`${b.name} is due TODAY — ${fmt(b.amount)}`:`${b.name} is due in ${days} day${days>1?'s':''} — ${fmt(b.amount)}`;
+    const day = Number(b.day || 1);
+    const days = day - today;
+    if(days===3 || days===1 || days===0){
+      const msg = days===0 ? `${b.name} is due TODAY — ${fmt(b.amount)}` : `${b.name} is due in ${days} day${days>1?'s':''} — ${fmt(b.amount)}`;
       new Notification('MonieTrack Bill Reminder 🔔',{body:msg,icon:'/monietrack_icon_192.png'});
     }
   });
@@ -1871,5 +1950,25 @@ sb.auth.onAuthStateChange((event, session)=>{
   }
 });
 </script>
+
+<!--
+SUPABASE SQL FOR BILLS CLOUD SYNC:
+
+create table if not exists bills (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  name text not null,
+  amount numeric not null,
+  day int not null,
+  icon text,
+  created_at timestamptz default now()
+);
+
+alter table bills disable row level security;
+
+grant all on table bills to anon;
+grant all on table bills to authenticated;
+-->
+
 </body>
 </html>
