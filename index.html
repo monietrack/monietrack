@@ -1224,7 +1224,20 @@ async function installApp(){
 sb.auth.getSession().then(({data})=>{
   if(data.session){
     user=data.session.user;
+    // Set the session explicitly so all requests use it
+    sb.auth.setSession(data.session);
     startApp();
+  }
+});
+
+// Auto refresh session when it expires
+sb.auth.onAuthStateChange((event, session)=>{
+  if(event==='SIGNED_IN'&&session){
+    user=session.user;
+  } else if(event==='SIGNED_OUT'){
+    user=null;
+  } else if(event==='TOKEN_REFRESHED'&&session){
+    user=session.user;
   }
 });
 </script>
