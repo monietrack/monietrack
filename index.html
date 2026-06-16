@@ -123,6 +123,95 @@ a{color:inherit;text-decoration:none;}
 .goal-pct{font-size:12px;font-weight:800;color:var(--green);}
 .goal-add-btn{background:var(--card);border:1px dashed var(--border2);border-radius:var(--radius-s);padding:14px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;color:var(--ink3);font-size:13px;font-weight:600;}
 
+
+/* ── ANALYTICS ── */
+.analytics-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px;
+  margin-bottom:18px;
+}
+.analytics-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-bottom:12px;
+}
+.analytics-mini{
+  background:var(--bg3);
+  border:1px solid var(--border2);
+  border-radius:10px;
+  padding:11px 8px;
+}
+.analytics-lbl{
+  font-size:9px;
+  color:var(--ink3);
+  font-weight:800;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+}
+.analytics-val{
+  font-size:14px;
+  font-weight:900;
+  margin-top:4px;
+}
+.cat-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:9px 0;
+  border-bottom:1px solid var(--border);
+}
+.cat-row:last-child{border-bottom:none;}
+.cat-ico{
+  width:34px;
+  height:34px;
+  border-radius:9px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,200,83,.10);
+  font-size:17px;
+  flex-shrink:0;
+}
+.cat-info{flex:1;min-width:0;}
+.cat-name{
+  font-size:12px;
+  font-weight:800;
+  margin-bottom:5px;
+}
+.cat-bar{
+  height:5px;
+  background:var(--border2);
+  border-radius:4px;
+  overflow:hidden;
+}
+.cat-fill{
+  height:100%;
+  background:var(--green);
+  border-radius:4px;
+}
+.cat-money{
+  font-size:12px;
+  font-weight:900;
+  color:var(--red);
+}
+.export-btn{
+  width:100%;
+  background:var(--card);
+  border:1px solid var(--border2);
+  color:var(--green);
+  border-radius:11px;
+  padding:13px;
+  font-size:13px;
+  font-weight:800;
+  font-family:var(--font);
+  cursor:pointer;
+  margin-bottom:18px;
+}
+.export-btn:active{transform:scale(.98);}
+
 /* ── CALCULATOR ── */
 .calc-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px;}
 .calc-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
@@ -347,6 +436,45 @@ a{color:inherit;text-decoration:none;}
     <div class="bill-list" id="bill-list"></div>
   </div>
 
+
+  <!-- ANALYTICS -->
+  <div class="view" id="analytics-view">
+    <div class="sec" style="margin-bottom:14px;">
+      <div class="sec-t">Analytics</div>
+      <div class="sec-a" onclick="exportCSV()">Export CSV</div>
+    </div>
+
+    <div class="analytics-card">
+      <div class="analytics-grid">
+        <div class="analytics-mini">
+          <div class="analytics-lbl">Income</div>
+          <div class="analytics-val" id="a-income">₦0</div>
+        </div>
+        <div class="analytics-mini">
+          <div class="analytics-lbl">Expense</div>
+          <div class="analytics-val" id="a-expense" style="color:var(--red)">₦0</div>
+        </div>
+        <div class="analytics-mini">
+          <div class="analytics-lbl">Net</div>
+          <div class="analytics-val" id="a-net" style="color:var(--green)">₦0</div>
+        </div>
+      </div>
+      <div class="sec" style="margin-top:6px;margin-bottom:6px;">
+        <div class="sec-t">Top Spending Categories</div>
+      </div>
+      <div id="analytics-cats"></div>
+    </div>
+
+    <button class="export-btn" onclick="exportCSV()">📤 Download Transactions CSV</button>
+
+    <div class="pro-gate">
+      <div class="pro-ico">📄</div>
+      <div class="pro-title">PDF Monthly Report</div>
+      <div class="pro-sub">Next upgrade: beautiful PDF statement with income, expenses, budgets and savings goals.</div>
+      <button class="pro-btn" onclick="toast('PDF report is coming next 🚀')">Coming Next</button>
+    </div>
+  </div>
+
   <!-- CALCULATOR -->
   <div class="view" id="calc-view">
     <div class="sec" style="margin-bottom:14px;"><div class="sec-t">Currency Converter</div></div>
@@ -393,7 +521,7 @@ a{color:inherit;text-decoration:none;}
   <button class="ni on" data-v="home" onclick="sv('home')"><div class="ni-ico">🏠</div><div class="ni-lbl">Home</div></button>
   <button class="ni" data-v="transactions" onclick="sv('transactions')"><div class="ni-ico">📋</div><div class="ni-lbl">History</div></button>
   <button class="ni" data-v="budget" onclick="sv('budget')"><div class="ni-ico">📊</div><div class="ni-lbl">Budget</div></button>
-  <button class="ni" data-v="bills" onclick="sv('bills')"><div class="ni-ico">🔔</div><div class="ni-lbl">Bills</div></button>
+  <button class="ni" data-v="analytics" onclick="sv('analytics')"><div class="ni-ico">📈</div><div class="ni-lbl">Analytics</div></button>
   <button class="ni" data-v="calc" onclick="sv('calc')"><div class="ni-ico">💱</div><div class="ni-lbl">Convert</div></button>
 </nav>
 <!-- BILL MODAL -->
@@ -987,6 +1115,7 @@ async function renderAll(){
   renderHomeBud(txs,buds);
   renderAllBud(txs,buds);
   renderGoals(gls);
+  renderAnalytics(txs);
 }
 
 function fmt(n){return '₦'+Number(n||0).toLocaleString('en-NG',{minimumFractionDigits:0,maximumFractionDigits:0});}
@@ -1094,6 +1223,87 @@ function renderGoals(gls){
   }
   document.getElementById('goals-grid').innerHTML=html||'<div class="empty"><div class="empty-ico">🎯</div><div class="empty-txt">No goals yet.</div></div>';
 }
+
+
+function renderAnalytics(txs){
+  const income = txs.filter(t => t.type === 'income').reduce((s,t) => s + Number(t.amount || 0), 0);
+  const expense = txs.filter(t => t.type === 'expense').reduce((s,t) => s + Number(t.amount || 0), 0);
+  const net = income - expense;
+
+  const ai = document.getElementById('a-income');
+  const ae = document.getElementById('a-expense');
+  const an = document.getElementById('a-net');
+  const catsEl = document.getElementById('analytics-cats');
+  if(!ai || !ae || !an || !catsEl) return;
+
+  ai.textContent = fmt(income);
+  ae.textContent = fmt(expense);
+  an.textContent = fmt(net);
+  an.style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const byCat = {};
+  txs.filter(t => t.type === 'expense').forEach(t => {
+    const key = t.cat || 'other';
+    byCat[key] = (byCat[key] || 0) + Number(t.amount || 0);
+  });
+
+  const rows = Object.entries(byCat).sort((a,b) => b[1] - a[1]).slice(0,6);
+
+  if(!rows.length){
+    catsEl.innerHTML = '<div class="empty"><div class="empty-ico">📈</div><div class="empty-txt">No expense data yet.<br>Add expenses to see analytics.</div></div>';
+    return;
+  }
+
+  const max = Math.max(...rows.map(r => r[1]), 1);
+
+  catsEl.innerHTML = rows.map(([cat, amount]) => {
+    const c = getCat('expense', cat);
+    const pct = Math.max(4, Math.round((amount / max) * 100));
+    return `<div class="cat-row">
+      <div class="cat-ico">${c.icon}</div>
+      <div class="cat-info">
+        <div class="cat-name">${c.name}</div>
+        <div class="cat-bar"><div class="cat-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="cat-money">${fmt(amount)}</div>
+    </div>`;
+  }).join('');
+}
+
+async function exportCSV(){
+  const txs = await getTx();
+  if(!txs.length){
+    toast('No transactions to export yet');
+    return;
+  }
+
+  const headers = ['date','type','amount','description','category'];
+  const rows = txs.map(t => [
+    t.date || '',
+    t.type || '',
+    String(t.amount || 0),
+    (t.description || t.desc || '').replaceAll('"','""'),
+    t.cat || ''
+  ]);
+
+  const csv = [
+    headers.join(','),
+    ...rows.map(r => r.map(v => `"${v}"`).join(','))
+  ].join('\n');
+
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `monietrack_transactions_${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast('CSV downloaded ✅');
+}
+
 
 // ── BILLS ──
 let bills = [];
