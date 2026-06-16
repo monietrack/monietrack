@@ -249,6 +249,23 @@ a{color:inherit;text-decoration:none;}
 }
 .export-btn:active{transform:scale(.98);}
 
+
+/* ── GOAL CONTRIBUTIONS ── */
+.goal{cursor:pointer;}
+.goal-actions{display:flex;gap:6px;margin-top:10px;}
+.goal-small-btn{flex:1;border:none;border-radius:8px;padding:8px 6px;font-size:11px;font-weight:800;font-family:var(--font);cursor:pointer;}
+.goal-add-money{background:var(--green);color:#fff;}
+.goal-view-btn{background:var(--bg3);color:var(--ink2);border:1px solid var(--border2);}
+.goal-detail-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
+.goal-detail-top{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.goal-detail-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:rgba(0,200,83,.12);font-size:25px;}
+.goal-detail-name{font-size:17px;font-weight:900;}
+.goal-detail-sub{font-size:12px;color:var(--ink3);margin-top:3px;}
+.goal-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0;}
+.goal-stat{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:10px 8px;}
+.goal-stat-lbl{font-size:9px;color:var(--ink3);font-weight:800;letter-spacing:.08em;text-transform:uppercase;}
+.goal-stat-val{font-size:13px;font-weight:900;margin-top:4px;}
+
 /* ── CALCULATOR ── */
 .calc-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px;}
 .calc-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
@@ -711,6 +728,34 @@ a{color:inherit;text-decoration:none;}
       </div>
     </div>
     <button class="sub-btn" onclick="saveGoal()">Create Goal</button>
+  </div>
+</div>
+
+
+<!-- GOAL CONTRIBUTION MODAL -->
+<div class="overlay" id="goal-contrib-modal" onclick="if(event.target===this)hideModal('goal-contrib-modal')">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">Add Goal Contribution</div>
+      <button class="modal-close" onclick="hideModal('goal-contrib-modal')">✕</button>
+    </div>
+    <input type="hidden" id="contrib-goal-id"/>
+    <div class="goal-detail-card" id="contrib-goal-summary"></div>
+    <div class="fg"><label class="fl">Amount Saved (₦)</label><input class="fi" id="contrib-amount" type="number" placeholder="e.g. 20000" inputmode="decimal"/></div>
+    <div class="fg"><label class="fl">Note</label><input class="fi" id="contrib-note" type="text" placeholder="e.g. Salary saving"/></div>
+    <div class="fg"><label class="fl">Date</label><input class="fi" id="contrib-date" type="date"/></div>
+    <button class="sub-btn" onclick="saveGoalContribution()">Save Contribution</button>
+  </div>
+</div>
+
+<!-- GOAL DETAIL MODAL -->
+<div class="overlay" id="goal-detail-modal" onclick="if(event.target===this)hideModal('goal-detail-modal')">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">Goal Details</div>
+      <button class="modal-close" onclick="hideModal('goal-detail-modal')">✕</button>
+    </div>
+    <div id="goal-detail-content"></div>
   </div>
 </div>
 
@@ -1259,11 +1304,22 @@ function renderAllBud(txs,buds){
   el.innerHTML=buds.map(b=>budHTML(b,txs)).join('')||'<div class="empty"><div class="empty-ico">📊</div><div class="empty-txt">No budgets set.<br>Tap ＋ Add to create one.</div></div>';
 }
 
+
 function renderGoals(gls){
   const FREE=2;
   let html=gls.map(g=>{
     const pct=Math.min(100,Math.round(Number(g.saved||0)/Number(g.target)*100))||0;
-    return`<div class="goal"><div class="goal-ico">${g.icon}</div><div class="goal-name">${g.name}</div><div class="goal-prog">${fmt(g.saved)} of ${fmt(g.target)}</div><div class="goal-bar"><div class="goal-fill" style="width:${pct}%"></div></div><div class="goal-pct">${pct}%</div></div>`;
+    return`<div class="goal" onclick="openGoalDetail('${g.id}')">
+      <div class="goal-ico">${g.icon}</div>
+      <div class="goal-name">${g.name}</div>
+      <div class="goal-prog">${fmt(g.saved)} of ${fmt(g.target)}</div>
+      <div class="goal-bar"><div class="goal-fill" style="width:${pct}%"></div></div>
+      <div class="goal-pct">${pct}% complete</div>
+      <div class="goal-actions">
+        <button class="goal-small-btn goal-add-money" onclick="event.stopPropagation();openGoalContribution('${g.id}')">＋ Add</button>
+        <button class="goal-small-btn goal-view-btn" onclick="event.stopPropagation();openGoalDetail('${g.id}')">View</button>
+      </div>
+    </div>`;
   }).join('');
   if(gls.length<FREE){
     html+=`<div class="goal-add-btn" onclick="showModal('goal-modal')"><span style="font-size:20px;">＋</span> New Goal</div>`;
@@ -1273,88 +1329,93 @@ function renderGoals(gls){
   document.getElementById('goals-grid').innerHTML=html||'<div class="empty"><div class="empty-ico">🎯</div><div class="empty-txt">No goals yet.</div></div>';
 }
 
-
-function renderAnalytics(txs){
-  const income = txs.filter(t => t.type === 'income').reduce((s,t) => s + Number(t.amount || 0), 0);
-  const expense = txs.filter(t => t.type === 'expense').reduce((s,t) => s + Number(t.amount || 0), 0);
-  const net = income - expense;
-
-  const ai = document.getElementById('a-income');
-  const ae = document.getElementById('a-expense');
-  const an = document.getElementById('a-net');
-  const catsEl = document.getElementById('analytics-cats');
-  if(!ai || !ae || !an || !catsEl) return;
-
-  ai.textContent = fmt(income);
-  ae.textContent = fmt(expense);
-  an.textContent = fmt(net);
-  an.style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
-
-  const byCat = {};
-  txs.filter(t => t.type === 'expense').forEach(t => {
-    const key = t.cat || 'other';
-    byCat[key] = (byCat[key] || 0) + Number(t.amount || 0);
-  });
-
-  const rows = Object.entries(byCat).sort((a,b) => b[1] - a[1]).slice(0,6);
-
-  if(!rows.length){
-    catsEl.innerHTML = '<div class="empty"><div class="empty-ico">📈</div><div class="empty-txt">No expense data yet.<br>Add expenses to see analytics.</div></div>';
-    return;
-  }
-
-  const max = Math.max(...rows.map(r => r[1]), 1);
-
-  catsEl.innerHTML = rows.map(([cat, amount]) => {
-    const c = getCat('expense', cat);
-    const pct = Math.max(4, Math.round((amount / max) * 100));
-    return `<div class="cat-row">
-      <div class="cat-ico">${c.icon}</div>
-      <div class="cat-info">
-        <div class="cat-name">${c.name}</div>
-        <div class="cat-bar"><div class="cat-fill" style="width:${pct}%"></div></div>
+async function openGoalContribution(goalId){
+  const gls = await getGoals();
+  const g = gls.find(x => String(x.id) === String(goalId));
+  if(!g) return;
+  document.getElementById('contrib-goal-id').value = g.id;
+  document.getElementById('contrib-date').value = today();
+  document.getElementById('contrib-amount').value = '';
+  document.getElementById('contrib-note').value = '';
+  const pct = Math.min(100,Math.round(Number(g.saved||0)/Number(g.target)*100))||0;
+  document.getElementById('contrib-goal-summary').innerHTML = `
+    <div class="goal-detail-top">
+      <div class="goal-detail-icon">${g.icon}</div>
+      <div>
+        <div class="goal-detail-name">${g.name}</div>
+        <div class="goal-detail-sub">${fmt(g.saved)} saved of ${fmt(g.target)}</div>
       </div>
-      <div class="cat-money">${fmt(amount)}</div>
-    </div>`;
-  }).join('');
+    </div>
+    <div class="goal-bar"><div class="goal-fill" style="width:${pct}%"></div></div>
+    <div class="goal-pct" style="margin-top:6px;">${pct}% complete</div>`;
+  showModal('goal-contrib-modal');
 }
 
-async function exportCSV(){
-  const txs = await getTx();
-  if(!txs.length){
-    toast('No transactions to export yet');
+async function saveGoalContribution(){
+  const goalId = document.getElementById('contrib-goal-id').value;
+  const amount = parseFloat(document.getElementById('contrib-amount').value);
+  if(!amount || amount <= 0){ toast('Enter a valid contribution amount ⚠️'); return; }
+  await addGoalContributionDB(goalId, amount);
+  hideModal('goal-contrib-modal');
+  toast('Goal contribution added! 🎯');
+  renderAll();
+}
+
+async function addGoalContributionDB(goalId, amount){
+  if(useLocal || !user){
+    const gls = LS.get('goals',[]);
+    const idx = gls.findIndex(g => String(g.id) === String(goalId));
+    if(idx >= 0){
+      gls[idx].saved = Number(gls[idx].saved || 0) + Number(amount);
+      LS.set('goals', gls);
+    }
     return;
   }
-
-  const headers = ['date','type','amount','description','category'];
-  const rows = txs.map(t => [
-    t.date || '',
-    t.type || '',
-    String(t.amount || 0),
-    (t.description || t.desc || '').replaceAll('"','""'),
-    t.cat || ''
-  ]);
-
-  const csv = [
-    headers.join(','),
-    ...rows.map(r => r.map(v => `"${v}"`).join(','))
-  ].join('\n');
-
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  const stamp = new Date().toISOString().slice(0,10);
-  a.href = url;
-  a.download = `monietrack_transactions_${stamp}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-  toast('CSV downloaded ✅');
+  const gls = await getGoals();
+  const g = gls.find(x => String(x.id) === String(goalId));
+  if(!g) throw new Error('Goal not found');
+  const newSaved = Number(g.saved || 0) + Number(amount);
+  const { error } = await sb
+    .from('goals')
+    .update({ saved: newSaved })
+    .eq('id', goalId)
+    .eq('user_id', user.id);
+  if(error){
+    console.error('GOAL CONTRIBUTION ERROR:', error);
+    toast('⚠️ Contribution failed: ' + error.message);
+    throw error;
+  }
 }
 
+async function openGoalDetail(goalId){
+  const gls = await getGoals();
+  const g = gls.find(x => String(x.id) === String(goalId));
+  if(!g) return;
+  const pct = Math.min(100,Math.round(Number(g.saved||0)/Number(g.target)*100))||0;
+  const remaining = Math.max(0, Number(g.target || 0) - Number(g.saved || 0));
+  document.getElementById('goal-detail-content').innerHTML = `
+    <div class="goal-detail-card">
+      <div class="goal-detail-top">
+        <div class="goal-detail-icon">${g.icon}</div>
+        <div>
+          <div class="goal-detail-name">${g.name}</div>
+          <div class="goal-detail-sub">${pct}% complete</div>
+        </div>
+      </div>
+      <div class="goal-bar"><div class="goal-fill" style="width:${pct}%"></div></div>
+      <div class="goal-stat-grid">
+        <div class="goal-stat"><div class="goal-stat-lbl">Target</div><div class="goal-stat-val">${fmt(g.target)}</div></div>
+        <div class="goal-stat"><div class="goal-stat-lbl">Saved</div><div class="goal-stat-val" style="color:var(--green)">${fmt(g.saved)}</div></div>
+        <div class="goal-stat"><div class="goal-stat-lbl">Left</div><div class="goal-stat-val" style="color:var(--gold)">${fmt(remaining)}</div></div>
+      </div>
+      <button class="sub-btn" onclick="hideModal('goal-detail-modal');openGoalContribution('${g.id}')">＋ Add Contribution</button>
+    </div>
+    <div class="empty"><div class="empty-ico">💰</div><div class="empty-txt">Saved amount updates instantly.<br>Contribution history can be added next.</div></div>`;
+  showModal('goal-detail-modal');
+}
 
 // ── BILLS ──
+
 let bills = [];
 
 function loadBills(){
