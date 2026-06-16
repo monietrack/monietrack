@@ -1135,14 +1135,8 @@ function toggleProfileMenu(){
 
 async function signOut(){
   if(!useLocal) await sb.auth.signOut();
-  user = null;
-  useLocal = false;
-  document.getElementById('profile-menu').classList.remove('on');
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('auth-screen').style.display = 'flex';
-  // Clear local state
-  localTx=[]; localBud=[]; localGoals=[];
-  toast('Signed out successfully');
+  // Force clean reload — simplest and most reliable
+  window.location.reload();
 }
 
 function exportData(){
