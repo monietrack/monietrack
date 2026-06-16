@@ -736,82 +736,63 @@ async function startApp(){
 }
 
 // ── SUPABASE DB ──
-// ── SUPABASE FIRST — localStorage only for guests ──
+// ── SUPABASE FIRST — no RLS, filter by user_id in queries ──
 async function getTx(){
-  if(useLocal || !user) return LS.get('tx',[]);
-  try{
-    const {data,error} = await sb.from('transactions').select('*').eq('user_id',user.id).order('date',{ascending:false});
-    if(error) throw error;
-    return data||[];
-  }catch(e){ console.log('getTx error:',e); return LS.get('tx',[]); }
+  if(useLocal||!user) return LS.get('tx',[]);
+  const {data} = await sb.from('transactions').select('*').eq('user_id',user.id).order('date',{ascending:false});
+  return data||[];
 }
 async function addTxDB(tx){
-  if(useLocal || !user){
-    const local=LS.get('tx',[]); local.unshift(tx); LS.set('tx',local); return;
-  }
-  try{
-    const row={
-      id:Number(tx.id),
-      user_id:user.id,
-      type:tx.type,
-      amount:Number(tx.amount),
-      description:tx.description||tx.desc||'',
-      cat:tx.cat||'other',
-      date:tx.date
-    };
-    const {error}=await sb.from('transactions').insert(row);
-    if(error) throw error;
-  }catch(e){ console.log('addTx error:',e); toast('Save failed — check connection ⚠️'); }
+  if(useLocal||!user){ const l=LS.get('tx',[]); l.unshift(tx); LS.set('tx',l); return; }
+  const {error} = await sb.from('transactions').insert({
+    id:Number(tx.id),
+    user_id:user.id,
+    type:tx.type,
+    amount:Number(tx.amount),
+    description:tx.description||tx.desc||'',
+    cat:tx.cat||'other',
+    date:tx.date
+  });
+  if(error){ console.log('INSERT ERROR:',error); toast('⚠️ Save failed: '+error.message); }
 }
 async function getBud(){
-  if(useLocal || !user) return LS.get('bud',[]);
-  try{
-    const {data,error}=await sb.from('budgets').select('*').eq('user_id',user.id);
-    if(error) throw error;
-    return data||[];
-  }catch(e){ return LS.get('bud',[]); }
+  if(useLocal||!user) return LS.get('bud',[]);
+  const {data} = await sb.from('budgets').select('*').eq('user_id',user.id);
+  return data||[];
 }
 async function saveBudDB(b){
-  if(useLocal || !user){
-    const local=LS.get('bud',[]); const i=local.findIndex(x=>x.cat===b.cat);
-    if(i>=0) local[i]=b; else local.push(b); LS.set('bud',local); return;
-  }
-  try{
-    const row={
-      id:Number(b.id)||Date.now(),
-      user_id:user.id,
-      cat:b.cat,
-      budget_limit:Number(b.budget_limit||b.limit||0),
-      icon:b.icon||'📦'
-    };
-    const {error}=await sb.from('budgets').upsert(row,{onConflict:'user_id,cat'});
-    if(error) throw error;
-  }catch(e){ console.log('saveBud error:',e); }
+  if(useLocal||!user){ const l=LS.get('bud',[]); const i=l.findIndex(x=>x.cat===b.cat); if(i>=0)l[i]=b; else l.push(b); LS.set('bud',l); return; }
+  await sb.from('budgets').upsert({
+    id:Number(b.id)||Date.now(),
+    user_id:user.id,
+    cat:b.cat,
+    budget_limit:Number(b.budget_limit||b.limit||0),
+    icon:b.icon||'📦'
+  },{onConflict:'user_id,cat'});
 }
 async function getGoals(){
-  if(useLocal || !user) return LS.get('goals',[]);
-  try{
-    const {data,error}=await sb.from('goals').select('*').eq('user_id',user.id);
-    if(error) throw error;
-    return data||[];
-  }catch(e){ return LS.get('goals',[]); }
+  if(useLocal||!user) return LS.get('goals',[]);
+  const {data} = await sb.from('goals').select('*').eq('user_id',user.id);
+  return data||[];
 }
 async function saveGoalDB(g){
-  if(useLocal || !user){
-    const local=LS.get('goals',[]); local.push(g); LS.set('goals',local); return;
-  }
-  try{
-    const row={
-      id:Number(g.id)||Date.now(),
-      user_id:user.id,
-      name:g.name,
-      icon:g.icon||'💰',
-      target:Number(g.target),
-      saved:Number(g.saved||0)
-    };
-    const {error}=await sb.from('goals').insert(row);
-    if(error) throw error;
-  }catch(e){ console.log('saveGoal error:',e); }
+  if(useLocal||!user){ const l=LS.get('goals',[]); l.push(g); LS.set('goals',l); return; }
+  await sb.from('goals').insert({
+    id:Number(g.id)||Date.now(),
+    user_id:user.id,
+    name:g.name,
+    icon:g.icon||'💰',
+    target:Number(g.target),
+    saved:Number(g.saved||0)
+  });
+}
+async function deleteTxDB(id){
+  if(useLocal||!user){ let l=LS.get('tx',[]); l=l.filter(x=>String(x.id)!==String(id)); LS.set('tx',l); return; }
+  await sb.from('transactions').delete().eq('id',Number(id)).eq('user_id',user.id);
+}
+async function updateTxDB(id,updates){
+  if(useLocal||!user){ const l=LS.get('tx',[]); const i=l.findIndex(x=>String(x.id)===String(id)); if(i>=0){l[i]={...l[i],...updates}; LS.set('tx',l);} return; }
+  await sb.from('transactions').update({amount:Number(updates.amount),description:updates.description,date:updates.date}).eq('id',Number(id)).eq('user_id',user.id);
 }
 
 // ── RATES ──
@@ -898,16 +879,7 @@ async function saveEdit(){
   const desc = document.getElementById('edit-desc').value.trim();
   const date = document.getElementById('edit-date').value;
   if(!amt||!desc){ toast('Fill all fields ⚠️'); return; }
-  // Update localStorage
-  const local = LS.get('tx',[]);
-  const i = local.findIndex(x=>String(x.id)===String(id));
-  if(i>=0){ local[i].amount=amt; local[i].description=desc; local[i].date=date; }
-  LS.set('tx',local);
-  localTx=local;
-  // Update Supabase
-  if(!useLocal&&user){
-    try{ await sb.from('transactions').update({amount:amt,description:desc,date}).eq('id',id).eq('user_id',user.id); }catch(e){}
-  }
+  await updateTxDB(id,{amount:amt,description:desc,date});
   hideModal('edit-modal');
   toast('Transaction updated! ✅');
   renderAll();
@@ -916,15 +888,7 @@ async function saveEdit(){
 async function deleteTx(){
   const id = document.getElementById('edit-id').value;
   if(!confirm('Delete this transaction?')) return;
-  // Remove from localStorage
-  let local = LS.get('tx',[]);
-  local = local.filter(x=>String(x.id)!==String(id));
-  LS.set('tx',local);
-  localTx=local;
-  // Remove from Supabase
-  if(!useLocal&&user){
-    try{ await sb.from('transactions').delete().eq('id',id).eq('user_id',user.id); }catch(e){}
-  }
+  await deleteTxDB(id);
   hideModal('edit-modal');
   toast('Transaction deleted 🗑');
   renderAll();
