@@ -736,68 +736,82 @@ async function startApp(){
 }
 
 // ── SUPABASE DB ──
-// ── ALWAYS save to localStorage first, then sync to Supabase if logged in ──
+// ── SUPABASE FIRST — localStorage only for guests ──
 async function getTx(){
-  // Always load from localStorage first for instant display
-  const local = LS.get('tx',[]);
-  if(useLocal || !user) return local;
-  // If logged in, try Supabase
+  if(useLocal || !user) return LS.get('tx',[]);
   try{
-    const {data} = await sb.from('transactions').select('*').eq('user_id',user.id).order('date',{ascending:false});
-    if(data&&data.length>0){
-      LS.set('tx',data); // sync to local
-      return data;
-    }
-    return local;
-  }catch(e){ return local; }
+    const {data,error} = await sb.from('transactions').select('*').eq('user_id',user.id).order('date',{ascending:false});
+    if(error) throw error;
+    return data||[];
+  }catch(e){ console.log('getTx error:',e); return LS.get('tx',[]); }
 }
 async function addTxDB(tx){
-  // ALWAYS save to localStorage immediately
-  const local = LS.get('tx',[]);
-  local.unshift(tx);
-  LS.set('tx',local);
-  localTx = local;
-  // Also save to Supabase if logged in
-  if(!useLocal && user){
-    try{ await sb.from('transactions').insert({...tx,user_id:user.id}); }catch(e){}
+  if(useLocal || !user){
+    const local=LS.get('tx',[]); local.unshift(tx); LS.set('tx',local); return;
   }
+  try{
+    const row={
+      id:Number(tx.id),
+      user_id:user.id,
+      type:tx.type,
+      amount:Number(tx.amount),
+      description:tx.description||tx.desc||'',
+      cat:tx.cat||'other',
+      date:tx.date
+    };
+    const {error}=await sb.from('transactions').insert(row);
+    if(error) throw error;
+  }catch(e){ console.log('addTx error:',e); toast('Save failed — check connection ⚠️'); }
 }
 async function getBud(){
-  const local = LS.get('bud',[]);
-  if(useLocal || !user) return local;
+  if(useLocal || !user) return LS.get('bud',[]);
   try{
-    const {data} = await sb.from('budgets').select('*').eq('user_id',user.id);
-    if(data&&data.length>0){ LS.set('bud',data); return data; }
-    return local;
-  }catch(e){ return local; }
+    const {data,error}=await sb.from('budgets').select('*').eq('user_id',user.id);
+    if(error) throw error;
+    return data||[];
+  }catch(e){ return LS.get('bud',[]); }
 }
 async function saveBudDB(b){
-  const local = LS.get('bud',[]);
-  const i = local.findIndex(x=>x.cat===b.cat);
-  if(i>=0) local[i]=b; else local.push(b);
-  LS.set('bud',local);
-  localBud = local;
-  if(!useLocal && user){
-    try{ await sb.from('budgets').upsert({...b,user_id:user.id},{onConflict:'user_id,cat'}); }catch(e){}
+  if(useLocal || !user){
+    const local=LS.get('bud',[]); const i=local.findIndex(x=>x.cat===b.cat);
+    if(i>=0) local[i]=b; else local.push(b); LS.set('bud',local); return;
   }
+  try{
+    const row={
+      id:Number(b.id)||Date.now(),
+      user_id:user.id,
+      cat:b.cat,
+      budget_limit:Number(b.budget_limit||b.limit||0),
+      icon:b.icon||'📦'
+    };
+    const {error}=await sb.from('budgets').upsert(row,{onConflict:'user_id,cat'});
+    if(error) throw error;
+  }catch(e){ console.log('saveBud error:',e); }
 }
 async function getGoals(){
-  const local = LS.get('goals',[]);
-  if(useLocal || !user) return local;
+  if(useLocal || !user) return LS.get('goals',[]);
   try{
-    const {data} = await sb.from('goals').select('*').eq('user_id',user.id);
-    if(data&&data.length>0){ LS.set('goals',data); return data; }
-    return local;
-  }catch(e){ return local; }
+    const {data,error}=await sb.from('goals').select('*').eq('user_id',user.id);
+    if(error) throw error;
+    return data||[];
+  }catch(e){ return LS.get('goals',[]); }
 }
 async function saveGoalDB(g){
-  const local = LS.get('goals',[]);
-  local.push(g);
-  LS.set('goals',local);
-  localGoals = local;
-  if(!useLocal && user){
-    try{ await sb.from('goals').insert({...g,user_id:user.id}); }catch(e){}
+  if(useLocal || !user){
+    const local=LS.get('goals',[]); local.push(g); LS.set('goals',local); return;
   }
+  try{
+    const row={
+      id:Number(g.id)||Date.now(),
+      user_id:user.id,
+      name:g.name,
+      icon:g.icon||'💰',
+      target:Number(g.target),
+      saved:Number(g.saved||0)
+    };
+    const {error}=await sb.from('goals').insert(row);
+    if(error) throw error;
+  }catch(e){ console.log('saveGoal error:',e); }
 }
 
 // ── RATES ──
