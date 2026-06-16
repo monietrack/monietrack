@@ -724,15 +724,27 @@ async function migrateLocalToSupabase(){
 async function startApp(){
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('app').style.display='flex';
-  // Migrate local data to Supabase if logged in
-  await migrateLocalToSupabase();
-  loadRates();
-  loadBills();
-  renderAll();
   document.getElementById('tx-date').value = today();
   setType('income');
   const mo = new Date().toLocaleString('en-NG',{month:'long',year:'numeric'});
   document.getElementById('bal-month').textContent = mo;
+  // Show loading state
+  document.getElementById('bal-amt').textContent='Loading...';
+  // Load rates in background
+  loadRates();
+  loadBills();
+  // Wait for Supabase data FIRST then render
+  if(user && !useLocal){
+    try{
+      // Clear localStorage so old data doesn't show
+      if(!useLocal) {
+        localStorage.removeItem('mt_tx');
+        localStorage.removeItem('mt_bud');
+        localStorage.removeItem('mt_goals');
+      }
+    }catch(e){}
+  }
+  await renderAll();
 }
 
 // ── SUPABASE DB ──
