@@ -628,6 +628,61 @@ a{color:inherit;text-decoration:none;}
   text-align:center;
 }
 
+
+/* ── AI ACCOUNTANT ── */
+.ai-card{
+  background:linear-gradient(135deg,#101b14,#0b0b0b);
+  border:1px solid rgba(0,200,83,.22);
+  border-radius:var(--radius);
+  padding:16px;
+  margin-bottom:16px;
+}
+.ai-title{
+  font-size:16px;
+  font-weight:900;
+  margin-bottom:6px;
+}
+.ai-sub{
+  font-size:12px;
+  color:var(--ink3);
+  line-height:1.5;
+}
+.ai-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin:12px 0;
+}
+.ai-chip{
+  border:1px solid var(--border2);
+  background:var(--card);
+  color:var(--ink2);
+  border-radius:999px;
+  padding:8px 10px;
+  font-size:11px;
+  font-weight:800;
+  cursor:pointer;
+}
+.ai-answer{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-s);
+  padding:14px;
+  margin-top:14px;
+  font-size:13px;
+  line-height:1.6;
+  color:var(--ink2);
+}
+.ai-answer b{
+  color:var(--green);
+}
+.ai-answer-title{
+  font-size:13px;
+  font-weight:900;
+  color:var(--ink);
+  margin-bottom:6px;
+}
+
 </style>
 </head>
 <body>
@@ -822,6 +877,45 @@ a{color:inherit;text-decoration:none;}
     <div id="invoice-list"></div>
   </div>
 
+
+  <!-- AI ACCOUNTANT -->
+  <div class="view" id="ai-view">
+    <div class="sec" style="margin-bottom:14px;">
+      <div class="sec-t">AI Accountant</div>
+    </div>
+
+    <div class="ai-card">
+      <div class="ai-title">🧠 Ask MonieTrack AI</div>
+      <div class="ai-sub">
+        Ask questions about your spending, savings, bills, and invoices. No bank connection required.
+      </div>
+    </div>
+
+    <div class="ai-chips">
+      <button class="ai-chip" onclick="askAIQuick('How much did I spend this month?')">Spent this month</button>
+      <button class="ai-chip" onclick="askAIQuick('What was my largest expense?')">Largest expense</button>
+      <button class="ai-chip" onclick="askAIQuick('How much have I saved?')">Total saved</button>
+      <button class="ai-chip" onclick="askAIQuick('Which bills are due?')">Bills due</button>
+      <button class="ai-chip" onclick="askAIQuick('How many invoices are unpaid?')">Unpaid invoices</button>
+    </div>
+
+    <div class="fg">
+      <label class="fl">Your Question</label>
+      <input class="fi" id="ai-question" type="text" placeholder="Ask: How much did I spend on food?">
+    </div>
+
+    <button class="sub-btn" onclick="askAI()">Ask AI</button>
+
+    <div id="ai-answer" class="ai-answer">
+      <div class="ai-answer-title">Try asking:</div>
+      How much did I spend this month?<br>
+      What was my largest expense?<br>
+      How much have I saved?<br>
+      Which bills are due?<br>
+      How many invoices are unpaid?
+    </div>
+  </div>
+
   <!-- CALCULATOR -->
   <div class="view" id="calc-view">
     <div class="sec" style="margin-bottom:14px;"><div class="sec-t">Currency Converter</div></div>
@@ -936,6 +1030,9 @@ a{color:inherit;text-decoration:none;}
     </div>
     <div class="pm-item" onclick="sv('invoices');toggleProfileMenu()">
       <div class="pm-item-ico">🧾</div>Invoices
+    </div>
+    <div class="pm-item" onclick="sv('ai');toggleProfileMenu()">
+      <div class="pm-item-ico">🧠</div>AI Accountant
     </div>
     <div class="pm-item" onclick="exportData()">
       <div class="pm-item-ico">📤</div>Export Data (PRO)
@@ -2562,6 +2659,164 @@ function downloadInvoicePDF(invoiceId){
 }
 
 
+
+// ── AI ACCOUNTANT V1 ──
+function aiMoney(n){
+  return fmt(Number(n || 0));
+}
+
+function aiMonthFilter(t){
+  const now = new Date();
+  const ym = now.toISOString().slice(0,7);
+  return String(t.date || '').slice(0,7) === ym;
+}
+
+function aiCatName(type, cat){
+  try{
+    return getCat(type, cat).name || cat || 'Other';
+  }catch{
+    return cat || 'Other';
+  }
+}
+
+function setAIAnswer(title, body){
+  const el = document.getElementById('ai-answer');
+  if(!el) return;
+  el.innerHTML = `<div class="ai-answer-title">${title}</div>${body}`;
+}
+
+function askAIQuick(q){
+  const input = document.getElementById('ai-question');
+  if(input) input.value = q;
+  askAI();
+}
+
+async function askAI(){
+  const input = document.getElementById('ai-question');
+  const questionRaw = input ? input.value.trim() : '';
+  const q = questionRaw.toLowerCase();
+
+  if(!q){
+    setAIAnswer('Ask me something', 'Type a question like <b>How much did I spend this month?</b>');
+    return;
+  }
+
+  const txs = await getTx();
+  const gls = await getGoals();
+  let invs = [];
+  try{
+    if(typeof loadInvoices === 'function'){
+      if(!invoices || !Array.isArray(invoices)) await loadInvoices();
+      invs = invoices || [];
+    }
+  }catch(e){ invs = []; }
+
+  const monthlyTxs = txs.filter(aiMonthFilter);
+  const monthlyExpenses = monthlyTxs.filter(t => t.type === 'expense');
+  const monthlyIncome = monthlyTxs.filter(t => t.type === 'income');
+
+  try{
+    if(user && !useLocal && typeof sb !== 'undefined'){
+      await sb.from('ai_usage').insert({
+        user_id: user.id,
+        question: questionRaw
+      });
+    }
+  }catch(e){
+    console.warn('AI usage log skipped:', e.message);
+  }
+
+  if(q.includes('spent') || q.includes('spend') || q.includes('expense')){
+    const total = monthlyExpenses.reduce((s,t)=>s+Number(t.amount||0),0);
+    const byCat = {};
+    monthlyExpenses.forEach(t=>{
+      const cat = t.cat || 'other';
+      byCat[cat] = (byCat[cat] || 0) + Number(t.amount || 0);
+    });
+    const top = Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,3);
+    let body = `You spent <b>${aiMoney(total)}</b> this month.`;
+    if(top.length){
+      body += `<br><br><b>Top categories:</b><br>` + top.map(([cat,amt])=>`• ${aiCatName('expense',cat)}: <b>${aiMoney(amt)}</b>`).join('<br>');
+    }
+    setAIAnswer('Monthly Spending', body);
+    return;
+  }
+
+  if(q.includes('income') || q.includes('earn') || q.includes('earned')){
+    const total = monthlyIncome.reduce((s,t)=>s+Number(t.amount||0),0);
+    setAIAnswer('Monthly Income', `You earned <b>${aiMoney(total)}</b> this month.`);
+    return;
+  }
+
+  if(q.includes('balance') || q.includes('left') || q.includes('net')){
+    const income = monthlyIncome.reduce((s,t)=>s+Number(t.amount||0),0);
+    const expense = monthlyExpenses.reduce((s,t)=>s+Number(t.amount||0),0);
+    const net = income - expense;
+    setAIAnswer('Net Balance This Month', `Income: <b>${aiMoney(income)}</b><br>Expenses: <b>${aiMoney(expense)}</b><br>Net: <b>${aiMoney(net)}</b>`);
+    return;
+  }
+
+  if(q.includes('largest') || q.includes('biggest')){
+    const largest = txs.filter(t=>t.type==='expense').sort((a,b)=>Number(b.amount||0)-Number(a.amount||0))[0];
+    if(!largest){
+      setAIAnswer('Largest Expense', 'No expense found yet.');
+      return;
+    }
+    setAIAnswer('Largest Expense', `Your largest expense was <b>${largest.description || largest.desc || 'Expense'}</b><br>Amount: <b>${aiMoney(largest.amount)}</b><br>Date: ${largest.date || 'N/A'}`);
+    return;
+  }
+
+  if(q.includes('saved') || q.includes('saving') || q.includes('goals')){
+    const totalSaved = gls.reduce((s,g)=>s+Number(g.saved||0),0);
+    const totalTarget = gls.reduce((s,g)=>s+Number(g.target||0),0);
+    let body = `You have saved <b>${aiMoney(totalSaved)}</b> toward your goals.`;
+    if(totalTarget){
+      const pct = Math.round((totalSaved / totalTarget) * 100);
+      body += `<br>Total goal target: <b>${aiMoney(totalTarget)}</b><br>Progress: <b>${pct}%</b>`;
+    }
+    setAIAnswer('Savings Goals', body);
+    return;
+  }
+
+  if(q.includes('bill')){
+    const billList = (typeof bills !== 'undefined' && Array.isArray(bills)) ? bills : [];
+    if(!billList.length){
+      setAIAnswer('Bills', 'You do not have any bills saved yet.');
+      return;
+    }
+    const todayDay = new Date().getDate();
+    const upcoming = billList.map(b=>{
+      const day = Number(b.day || 1);
+      const days = day >= todayDay ? day - todayDay : 31 - todayDay + day;
+      return {...b, days};
+    }).sort((a,b)=>a.days-b.days).slice(0,5);
+
+    setAIAnswer('Upcoming Bills', upcoming.map(b=>`• ${b.name}: <b>${aiMoney(b.amount)}</b> due in ${b.days} day${b.days===1?'':'s'}`).join('<br>'));
+    return;
+  }
+
+  if(q.includes('invoice') || q.includes('unpaid') || q.includes('paid')){
+    const unpaid = invs.filter(i => i.status !== 'paid');
+    const paid = invs.filter(i => i.status === 'paid');
+    const unpaidTotal = unpaid.reduce((s,i)=>s+Number(i.total||0),0);
+    const paidTotal = paid.reduce((s,i)=>s+Number(i.total||0),0);
+    setAIAnswer('Invoices', `Unpaid invoices: <b>${unpaid.length}</b><br>Unpaid total: <b>${aiMoney(unpaidTotal)}</b><br>Paid invoices: <b>${paid.length}</b><br>Paid total: <b>${aiMoney(paidTotal)}</b>`);
+    return;
+  }
+
+  if(q.includes('last') && q.includes('transaction')){
+    const last = txs.slice(0,5);
+    if(!last.length){
+      setAIAnswer('Last Transactions', 'No transactions found yet.');
+      return;
+    }
+    setAIAnswer('Last Transactions', last.map(t=>`• ${t.description || t.desc || 'Transaction'} — <b>${aiMoney(t.amount)}</b> (${t.type})`).join('<br>'));
+    return;
+  }
+
+  setAIAnswer('I am still learning', `Try asking:<br>• How much did I spend this month?<br>• What was my largest expense?<br>• How much have I saved?<br>• Which bills are due?<br>• How many invoices are unpaid?`);
+}
+
 // ── CALCULATOR ──
 function setCurr(code,sym){
   currCode=code;
@@ -2755,6 +3010,23 @@ grant all on table invoice_items to authenticated;
 
 <!-- EXTRA SQL FOR THIS UPDATE:
 alter table invoices add column if not exists currency text default 'NGN';
+-->
+
+
+<!--
+SUPABASE SQL FOR AI ACCOUNTANT USAGE LOG:
+
+create table if not exists ai_usage(
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid,
+  question text,
+  created_at timestamptz default now()
+);
+
+alter table ai_usage disable row level security;
+
+grant all on table ai_usage to anon;
+grant all on table ai_usage to authenticated;
 -->
 
 </body>
