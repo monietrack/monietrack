@@ -265,6 +265,8 @@ function initFlashNigeriaAd(){
 }
 
 
+
+console.log('SAVED_FIX_V1 loaded');
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -1615,7 +1617,12 @@ async function loadRates(){
 }
 
 // ── RENDER ──
-async function renderAll(){
+async 
+function calcRealSaved(income, expense){
+  return Math.max(0, Number(income || 0) - Number(expense || 0));
+}
+
+function renderAll(){
   const [txs,buds,gls] = await Promise.all([getTx(),getBud(),getGoals()]);
   renderBalance(txs,gls);
   renderHomeTx(txs);
@@ -1638,7 +1645,7 @@ function renderBalance(txs,gls){
   document.getElementById('bal-amt').textContent=fmt(inc-exp);
   document.getElementById('p-inc').textContent=fmt(inc);
   document.getElementById('p-exp').textContent=fmt(exp);
-  document.getElementById('p-sav').textContent=fmt(sav);
+  document.getElementById('p-sav').textContent = fmt(calcRealSaved(inc, exp));
 }
 
 function txHTML(t){
