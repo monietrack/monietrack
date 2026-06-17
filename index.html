@@ -146,17 +146,6 @@ function initFlashNigeriaAd(){
 }
 
 
-document.addEventListener('DOMContentLoaded', () => {
-  const authBtn = document.getElementById('auth-submit');
-  if(authBtn){
-    authBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      if(!authBtn.disabled) doAuth();
-    });
-  }
-});
-console.log('MONIETRACK_LOGIN_CLEAN_FIX loaded');
-
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -958,6 +947,7 @@ a{color:inherit;text-decoration:none;}
 <div id="toast"></div>
 
 <script>
+console.log('MONIETRACK_SYNTAX_FIXED_V3');
 // ── SUPABASE ──
 const SB_URL = 'https://vmjnxedyaboxmhtnagro.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZtam54ZWR5YWJveG1odG5hZ3JvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1NDU0MDcsImV4cCI6MjA5NzEyMTQwN30.uKyw73QIYf8CnTOI4Ic0yYojaRp4PPNxV1wlTV1BcoU';
@@ -1134,7 +1124,7 @@ async function migrateLocalToSupabase(){
   }
 }
 
-async async async function startApp(){
+async function startApp(){
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('app').style.display='flex';
   // Migrate local data to Supabase if logged in
@@ -1396,7 +1386,7 @@ async function renderAll(){
   renderAnalytics(txs);
 }
 
-function fmt(n){return '₦'+Number(n||0).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2});});});}
+function fmt(n){return '₦'+Number(n||0).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function today(){return new Date().toISOString().split('T')[0];}
 function fmtDate(d){return new Date(d).toLocaleDateString('en-NG',{day:'numeric',month:'short'});}
 function getCat(type,id){return CATS[type]?.find(c=>c.id===id)||{icon:'📦',name:'Other'};}
