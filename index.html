@@ -22,6 +22,12 @@ console.log('MONIETRACK_LOGIN_FIX_V2 loaded');
 // IMPORTANT: replace this with your own public VAPID key after generating keys.
 const VAPID_PUBLIC_KEY = 'BDpnKdS-4FNGtQS8rAXMZwFDoNJhqu9eRX6Xq1sjqYy473KjLK2pCEinaXwJsgtpIYszM';
 
+function setPushStatus(msg){
+  const note = document.getElementById('push-status-note');
+  if(note) note.textContent = msg;
+  console.log('PUSH STATUS:', msg);
+}
+
 function urlBase64ToUint8Array(base64String){
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -37,86 +43,199 @@ async function updatePushButton(){
   const btn = document.getElementById('push-enable-btn');
   if(!btn) return;
 
-  if(!('serviceWorker' in navigator) || !('PushManager' in window)){
-    btn.textContent = 'Push not supported on this browser';
+  if(!('Notification' in window)){
+    btn.textContent = 'Notifications Not Supported';
     btn.classList.add('off');
     btn.disabled = true;
+    setPushStatus('This browser does not support notifications.');
+    return;
+  }
+
+  if(!('serviceWorker' in navigator)){
+    btn.textContent = 'Service Worker Not Supported';
+    btn.classList.add('off');
+    btn.disabled = true;
+    setPushStatus('This browser does not support service workers.');
+    return;
+  }
+
+  if(!('PushManager' in window)){
+    btn.textContent = 'Push Not Supported';
+    btn.classList.add('off');
+    btn.disabled = true;
+    setPushStatus('This browser does not support background push.');
     return;
   }
 
   if(Notification.permission === 'granted'){
     btn.textContent = 'Notifications Enabled ✅';
     btn.classList.remove('off');
+    btn.disabled = false;
+    setPushStatus('Notifications are enabled on this device.');
   } else if(Notification.permission === 'denied'){
     btn.textContent = 'Notifications Blocked';
     btn.classList.add('off');
+    btn.disabled = false;
+    setPushStatus('Notifications are blocked. Open browser site settings and allow notifications.');
   } else {
     btn.textContent = 'Enable Notifications';
     btn.classList.remove('off');
+    btn.disabled = false;
+    setPushStatus('Tap Enable, then choose Allow when your browser asks.');
   }
 }
 
 async function enablePushNotifications(){
-  if(!user){
-    toast('Login first to enable notifications');
-    return;
-  }
+  const btn = document.getElementById('push-enable-btn');
 
-  if(VAPID_PUBLIC_KEY === 'PASTE_YOUR_PUBLIC_VAPID_KEY_HERE' || !VAPID_PUBLIC_KEY){
-    toast('Add your VAPID public key first');
-    console.warn('Missing VAPID public key. Generate VAPID keys and replace VAPID_PUBLIC_KEY.');
-    return;
-  }
+  try{
+    if(btn){ btn.textContent = 'Checking...'; btn.disabled = true; }
 
-  if(!('serviceWorker' in navigator) || !('PushManager' in window)){
-    toast('Push notifications not supported on this browser');
-    return;
-  }
+    if(!user){
+      toast('Login first to enable notifications');
+      setPushStatus('Please login first.');
+      if(btn){ btn.textContent = 'Enable Notifications'; btn.disabled = false; }
+      return;
+    }
 
-  const permission = await Notification.requestPermission();
-  if(permission !== 'granted'){
-    toast('Notification permission not granted');
+    if(location.protocol !== 'https:' && location.hostname !== 'localhost'){
+      toast('Notifications need HTTPS');
+      setPushStatus('Push notifications require HTTPS.');
+      if(btn){ btn.textContent = 'Enable Notifications'; btn.disabled = false; }
+      return;
+    }
+
+    if(!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)){
+      toast('Push not supported here');
+      setPushStatus('This browser does not support background push. Try Chrome on Android or installed PWA.');
+      updatePushButton();
+  setTimeout(updatePushButton, 300);
+      return;
+    }
+
+    if(Notification.permission === 'denied'){
+      toast('Notifications are blocked');
+      setPushStatus('Notifications are blocked. Go to browser settings → Site settings → Notifications → Allow.');
+      updatePushButton();
+      return;
+    }
+
+    setPushStatus('Requesting notification permission...');
+    const permission = await Notification.requestPermission();
+
+    if(permission !== 'granted'){
+      toast('Permission not granted');
+      setPushStatus('Permission was not granted. Notifications cannot be enabled.');
+      updatePushButton();
+      return;
+    }
+
+    setPushStatus('Registering service worker...');
+    const registration = await navigator.serviceWorker.register('/sw.js?v=6');
+    await navigator.serviceWorker.ready;
+
+    setPushStatus('Creating push subscription...');
+    let subscription = await registration.pushManager.getSubscription();
+
+    if(!subscription){
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+
+    const subJson = subscription.toJSON();
+
+    if(!subJson.endpoint || !subJson.keys || !subJson.keys.p256dh || !subJson.keys.auth){
+      throw new Error('Invalid push subscription returned by browser.');
+    }
+
+    setPushStatus('Saving subscription to Supabase...');
+    const { error } = await sb.from('push_subscriptions').upsert({
+      user_id: user.id,
+      endpoint: subJson.endpoint,
+      p256dh: subJson.keys.p256dh,
+      auth: subJson.keys.auth,
+      user_agent: navigator.userAgent,
+      active: true
+    }, { onConflict:'endpoint' });
+
+    if(error){
+      console.error('PUSH SUBSCRIPTION SAVE ERROR:', error);
+      toast('Could not save subscription');
+      setPushStatus('Supabase error: ' + error.message);
+      updatePushButton();
+      return;
+    }
+
+    toast('Notifications enabled 🔔');
+    setPushStatus('Notifications are enabled and saved for this device.');
     updatePushButton();
-    return;
+
+    // Immediate local confirmation notification
+    try{
+      new Notification('MonieTrack Notifications Enabled ✅', {
+        body: 'You will receive bill reminders on this device.',
+        icon: '/monietrack_icon_192.png'
+      });
+    }catch(_e){}
+
+  }catch(e){
+    console.error('PUSH ENABLE ERROR:', e);
+    toast('Notification setup failed');
+    setPushStatus('Error: ' + (e.message || 'Notification setup failed.'));
+    updatePushButton();
+  }finally{
+    if(btn) btn.disabled = false;
   }
+}
 
-  const registration = await navigator.serviceWorker.register('/sw.js');
-  await navigator.serviceWorker.ready;
+async function sendTestNotification(){
+  try{
+    if(!('Notification' in window)){
+      toast('Notifications not supported');
+      setPushStatus('Notifications are not supported on this browser.');
+      return;
+    }
 
-  let subscription = await registration.pushManager.getSubscription();
+    if(Notification.permission !== 'granted'){
+      toast('Enable notifications first');
+      setPushStatus('Tap Enable Notifications first, then allow permission.');
+      return;
+    }
 
-  if(!subscription){
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    if('serviceWorker' in navigator){
+      const reg = await navigator.serviceWorker.getRegistration();
+      if(reg){
+        await reg.showNotification('MonieTrack Test 🔔', {
+          body: 'Your notification setup is alive.',
+          icon: '/monietrack_icon_192.png',
+          badge: '/monietrack_icon_192.png'
+        });
+        toast('Test notification sent');
+        setPushStatus('Test notification sent. Check your notification tray.');
+        return;
+      }
+    }
+
+    new Notification('MonieTrack Test 🔔', {
+      body: 'Your notification setup is alive.',
+      icon: '/monietrack_icon_192.png'
     });
+    toast('Test notification sent');
+    setPushStatus('Test notification sent.');
+
+  }catch(e){
+    console.error('TEST NOTIFICATION ERROR:', e);
+    toast('Test notification failed');
+    setPushStatus('Test failed: ' + (e.message || 'Unknown error.'));
   }
-
-  const subJson = subscription.toJSON();
-
-  const { error } = await sb.from('push_subscriptions').upsert({
-    user_id: user.id,
-    endpoint: subJson.endpoint,
-    p256dh: subJson.keys.p256dh,
-    auth: subJson.keys.auth,
-    user_agent: navigator.userAgent,
-    active: true
-  }, { onConflict:'endpoint' });
-
-  if(error){
-    console.error('PUSH SUBSCRIPTION SAVE ERROR:', error);
-    toast('Could not save notification subscription');
-    return;
-  }
-
-  toast('Background notifications enabled 🔔');
-  updatePushButton();
 }
 
 async function registerServiceWorkerOnly(){
   if('serviceWorker' in navigator){
     try{
-      await navigator.serviceWorker.register('/sw.js');
+      await navigator.serviceWorker.register('/sw.js?v=6');
     }catch(e){
       console.warn('Service worker registration failed:', e);
     }
@@ -487,6 +606,28 @@ a{color:inherit;text-decoration:none;}
 .invoice-sum-line{display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);padding:5px 0;}
 .invoice-sum-line.total{color:var(--ink);font-weight:900;font-size:15px;border-top:1px solid var(--border2);margin-top:5px;padding-top:10px;}
 
+
+.push-test-btn{
+  width:100%;
+  background:var(--bg3);
+  color:var(--ink2);
+  border:1px solid var(--border2);
+  border-radius:10px;
+  padding:10px;
+  font-size:12px;
+  font-weight:800;
+  font-family:var(--font);
+  cursor:pointer;
+  margin-top:8px;
+}
+.push-status-note{
+  font-size:10px;
+  color:var(--ink3);
+  line-height:1.45;
+  margin-top:8px;
+  text-align:center;
+}
+
 </style>
 </head>
 <body>
@@ -611,6 +752,8 @@ a{color:inherit;text-decoration:none;}
       <div class="push-title">🔔 Background Bill Notifications</div>
       <div class="push-sub">Get reminders 3 days before, 1 day before, and on the day your bills are due — even when MonieTrack is closed.</div>
       <button class="push-btn" id="push-enable-btn" onclick="enablePushNotifications()">Enable Notifications</button>
+      <button class="push-test-btn" onclick="sendTestNotification()">Send Test Notification</button>
+      <div class="push-status-note" id="push-status-note">Tap Enable, then choose Allow when your browser asks.</div>
     </div>
     <div class="bill-mini-note" id="bill-sync-note">Your bills now sync across devices when logged in.</div>
     <div class="bill-list" id="bill-list"></div>
