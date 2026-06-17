@@ -16,7 +16,9 @@
 <link rel="icon" type="image/png" sizes="192x192" href="/monietrack_icon_192.png?v=5"/>
 <link rel="shortcut icon" href="/monietrack_icon_192.png?v=5"/>
 <link rel="icon" href="/favicon.ico?v=5" sizes="any"/>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script>
 // ── BACKGROUND PUSH NOTIFICATIONS ──
 // IMPORTANT: replace this with your own public VAPID key after generating keys.
 const VAPID_PUBLIC_KEY = 'BDpnKdS-4FNGtQS8rAXMZwFDoNJhqu9eRX6Xq1sjqYy473KjLK2pCEinaXwJsgtpIYszM';
@@ -61,7 +63,7 @@ async function enablePushNotifications(){
     return;
   }
 
-  if(VAPID_PUBLIC_KEY === 'BDpnKdS-4FNGtQS8rAXMZwFDoNJhqu9eRX6Xq1sjqYy473KjLK2pCEinaXwJsgtpIYszM'){
+  if(VAPID_PUBLIC_KEY === 'PASTE_YOUR_PUBLIC_VAPID_KEY_HERE' || !VAPID_PUBLIC_KEY){
     toast('Add your VAPID public key first');
     console.warn('Missing VAPID public key. Generate VAPID keys and replace VAPID_PUBLIC_KEY.');
     return;
@@ -443,86 +445,18 @@ a{color:inherit;text-decoration:none;}
 .empty-ico{font-size:36px;margin-bottom:10px;}
 .empty-txt{font-size:13px;line-height:1.5;}
 
-/* ── FLASH NIGERIA SPONSORED AD ── */
-.flash-ad-card{
-  background:linear-gradient(135deg,#111827,#0b0f19);
-  border:1px solid rgba(0,200,83,.22);
-  border-radius:var(--radius);
-  padding:14px;
-  margin-bottom:18px;
-  position:relative;
-  overflow:hidden;
-  cursor:pointer;
-}
-.flash-ad-card::after{
-  content:'⚡';
-  position:absolute;
-  right:-8px;
-  bottom:-18px;
-  font-size:90px;
-  opacity:.06;
-}
-.flash-ad-top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:10px;
-}
-.flash-ad-badge{
-  font-size:9px;
-  font-weight:900;
-  letter-spacing:.12em;
-  color:var(--green);
-  text-transform:uppercase;
-}
-.flash-ad-close{
-  width:24px;
-  height:24px;
-  border-radius:50%;
-  border:1px solid rgba(255,255,255,.08);
-  background:rgba(255,255,255,.04);
-  color:var(--ink3);
-  cursor:pointer;
-  font-size:14px;
-}
-.flash-ad-body{
-  display:flex;
-  gap:12px;
-  align-items:center;
-  position:relative;
-  z-index:1;
-}
-.flash-ad-logo{
-  width:48px;
-  height:48px;
-  border-radius:14px;
-  background:var(--green);
-  color:#001b0b;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:25px;
-  font-weight:900;
-  box-shadow:0 4px 14px rgba(0,200,83,.22);
-  flex-shrink:0;
-}
-.flash-ad-title{
-  font-size:15px;
-  font-weight:900;
-  margin-bottom:3px;
-}
-.flash-ad-copy{
-  font-size:11px;
-  line-height:1.45;
-  color:var(--ink3);
-  margin-bottom:6px;
-}
-.flash-ad-link{
-  font-size:12px;
-  font-weight:900;
-  color:var(--green);
-}
 
+/* ── FLASH NIGERIA SPONSORED AD ── */
+.flash-ad-card{background:linear-gradient(135deg,rgba(0,200,83,.09),rgba(255,255,255,.025));border:1px solid rgba(0,200,83,.28);border-radius:12px;padding:10px 11px;margin:12px 0 16px;position:relative;overflow:hidden;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.18);}
+.flash-ad-card::after{content:'';position:absolute;right:-30px;top:-40px;width:110px;height:110px;border-radius:50%;background:rgba(0,200,83,.08);}
+.flash-ad-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.flash-ad-badge{font-size:8px;font-weight:900;letter-spacing:.14em;color:var(--green);text-transform:uppercase;}
+.flash-ad-close{width:20px;height:20px;border-radius:50%;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:var(--ink3);cursor:pointer;font-size:13px;line-height:18px;}
+.flash-ad-body{display:flex;gap:10px;align-items:center;position:relative;z-index:1;}
+.flash-ad-logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#00C853,#00a844);color:#001b0b;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;box-shadow:0 4px 14px rgba(0,200,83,.18);flex-shrink:0;}
+.flash-ad-title{font-size:13px;font-weight:900;margin-bottom:2px;}
+.flash-ad-copy{font-size:10px;line-height:1.35;color:var(--ink3);margin-bottom:4px;}
+.flash-ad-link{font-size:11px;font-weight:900;color:var(--green);}
 
 /* ── INVOICE LITE ── */
 .invoice-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-s);padding:14px;margin-bottom:9px;cursor:pointer;}
@@ -601,21 +535,6 @@ a{color:inherit;text-decoration:none;}
       </div>
     </div>
 
-    <div class="flash-ad-card" id="flash-ad-card" onclick="openFlashNigeriaAd()">
-      <div class="flash-ad-top">
-        <div class="flash-ad-badge">Sponsored</div>
-        <button class="flash-ad-close" onclick="hideFlashNigeriaAd(event)">×</button>
-      </div>
-      <div class="flash-ad-body">
-        <div class="flash-ad-logo">⚡</div>
-        <div>
-          <div class="flash-ad-title">Flash Nigeria</div>
-          <div class="flash-ad-copy">Breaking Nigerian news, live updates, and fresh stories from across the web.</div>
-          <div class="flash-ad-link">Visit www.flashnigeria.com →</div>
-        </div>
-      </div>
-    </div>
-
     <div class="rates" id="rates-bar">
       <div class="rate"><div class="rate-pair">USD/NGN</div><div class="rate-val" id="r-usd">Loading...</div></div>
       <div class="rate"><div class="rate-pair">EUR/NGN</div><div class="rate-val" id="r-eur">—</div></div>
@@ -630,6 +549,22 @@ a{color:inherit;text-decoration:none;}
     </div>
     <div class="sec"><div class="sec-t">Recent</div><div class="sec-a" onclick="sv('transactions')">See all</div></div>
     <div class="tx-list" id="home-tx"></div>
+
+    <div class="flash-ad-card" id="flash-ad-card" onclick="openFlashNigeriaAd()">
+      <div class="flash-ad-top">
+        <div class="flash-ad-badge">Sponsored</div>
+        <button class="flash-ad-close" onclick="hideFlashNigeriaAd(event)">×</button>
+      </div>
+      <div class="flash-ad-body">
+        <div class="flash-ad-logo">⚡</div>
+        <div>
+          <div class="flash-ad-title">Flash Nigeria</div>
+          <div class="flash-ad-copy">Breaking news, live updates, and fresh Nigerian stories.</div>
+          <div class="flash-ad-link">Visit site →</div>
+        </div>
+      </div>
+    </div>
+
     <div class="sec"><div class="sec-t">Budget</div><div class="sec-a" onclick="sv('budget')">Manage</div></div>
     <div class="bud-list" id="home-bud"></div>
   </div>
@@ -977,6 +912,12 @@ a{color:inherit;text-decoration:none;}
     <div class="fg"><label class="fl">Client Name</label><input class="fi" id="inv-client" type="text" placeholder="e.g. Jessica Libbey"/></div>
     <div class="fg"><label class="fl">Client Email</label><input class="fi" id="inv-email" type="email" placeholder="client@email.com"/></div>
     <div class="fg"><label class="fl">Due Date</label><input class="fi" id="inv-due" type="date"/></div>
+    <div class="fg"><label class="fl">Currency</label>
+      <select class="fi" id="inv-currency" onchange="updateInvoicePreview()">
+        <option value="NGN">₦ Nigerian Naira</option>
+        <option value="USD">$ US Dollar</option>
+      </select>
+    </div>
     <div class="fg">
       <label class="fl">Invoice Items</label>
       <div class="invoice-items" id="invoice-items"></div>
@@ -1442,7 +1383,7 @@ async function renderAll(){
   renderAnalytics(txs);
 }
 
-function fmt(n){return '₦'+Number(n||0).toLocaleString('en-NG',{minimumFractionDigits:0,maximumFractionDigits:0});}
+function fmt(n){return '₦'+Number(n||0).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2});});}
 function today(){return new Date().toISOString().split('T')[0];}
 function fmtDate(d){return new Date(d).toLocaleDateString('en-NG',{day:'numeric',month:'short'});}
 function getCat(type,id){return CATS[type]?.find(c=>c.id===id)||{icon:'📦',name:'Other'};}
@@ -1997,7 +1938,7 @@ async function downloadMonthlyPDF(){
   const margin = 40;
   let y = 42;
 
-  function money(n){ return 'NGN ' + Number(n || 0).toLocaleString('en-NG', {maximumFractionDigits:0}); }
+  function money(n){ const c=inv.currency||'NGN'; return c==='USD' ? '$' + Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : 'NGN ' + Number(n || 0).toLocaleString('en-NG', {minimumFractionDigits:2,maximumFractionDigits:2}); }
   function safeText(v){ return String(v || '').replace(/[₦]/g, 'NGN '); }
   function addFooter(){
     doc.setFontSize(9);
@@ -2143,6 +2084,14 @@ async function downloadMonthlyPDF(){
 
 
 // ── INVOICE LITE ──
+
+function invFmt(n, currency='NGN'){
+  const amount = Number(n || 0).toLocaleString(currency === 'USD' ? 'en-US' : 'en-NG', {minimumFractionDigits:2, maximumFractionDigits:2});
+  return currency === 'USD' ? '$' + amount : '₦' + amount;
+}
+function getInvCurrency(){ return document.getElementById('inv-currency')?.value || 'NGN'; }
+
+
 let invoices = [];
 let invoiceItemsDraft = [];
 
@@ -2206,7 +2155,7 @@ function renderInvoices(){
           <div class="invoice-no">${inv.invoice_no || 'Invoice'}</div>
           <div class="invoice-client">${inv.client_name || 'Client'}</div>
         </div>
-        <div class="invoice-amt">${fmt(inv.total)}</div>
+        <div class="invoice-amt">${invFmt(inv.total, inv.currency || "NGN")}</div>
       </div>
       <div class="invoice-meta">
         <div class="invoice-due">Due: ${inv.due_date ? fmtDate(inv.due_date) : 'No due date'}</div>
@@ -2223,6 +2172,7 @@ function openInvoiceModal(invoiceId=''){
   document.getElementById('inv-client').value = editing?.client_name || '';
   document.getElementById('inv-email').value = editing?.client_email || '';
   document.getElementById('inv-due').value = editing?.due_date || today();
+  if(document.getElementById('inv-currency')) document.getElementById('inv-currency').value = editing?.currency || 'NGN';
   document.getElementById('inv-tax').value = editing?.tax_pct || 0;
   document.getElementById('inv-discount').value = editing?.discount || 0;
   document.getElementById('inv-notes').value = editing?.notes || '';
@@ -2260,13 +2210,14 @@ function updateInvoicePreview(){
   const taxPct = parseFloat(document.getElementById('inv-tax')?.value || 0);
   const discount = parseFloat(document.getElementById('inv-discount')?.value || 0);
   const t = calcInvoiceTotals(invoiceItemsDraft, taxPct, discount);
+  const currency = getInvCurrency();
   const el = document.getElementById('invoice-preview');
   if(el){
     el.innerHTML = `
-      <div class="invoice-sum-line"><span>Subtotal</span><b>${fmt(t.subtotal)}</b></div>
-      <div class="invoice-sum-line"><span>Tax</span><b>${fmt(t.tax)}</b></div>
-      <div class="invoice-sum-line"><span>Discount</span><b>-${fmt(t.discount)}</b></div>
-      <div class="invoice-sum-line total"><span>Total</span><b>${fmt(t.total)}</b></div>
+      <div class="invoice-sum-line"><span>Subtotal</span><b>${invFmt(t.subtotal,currency)}</b></div>
+      <div class="invoice-sum-line"><span>Tax</span><b>${invFmt(t.tax,currency)}</b></div>
+      <div class="invoice-sum-line"><span>Discount</span><b>-${invFmt(t.discount,currency)}</b></div>
+      <div class="invoice-sum-line total"><span>Total</span><b>${invFmt(t.total,currency)}</b></div>
     `;
   }
 }
@@ -2276,6 +2227,7 @@ async function saveInvoice(){
   const clientName = document.getElementById('inv-client').value.trim();
   const clientEmail = document.getElementById('inv-email').value.trim();
   const dueDate = document.getElementById('inv-due').value || today();
+  const currency = document.getElementById('inv-currency')?.value || 'NGN';
   const taxPct = parseFloat(document.getElementById('inv-tax').value || 0);
   const discount = parseFloat(document.getElementById('inv-discount').value || 0);
   const notes = document.getElementById('inv-notes').value.trim();
@@ -2288,9 +2240,9 @@ async function saveInvoice(){
     const local = LS.get('invoices',[]);
     if(invoiceId){
       const idx = local.findIndex(i => String(i.id) === String(invoiceId));
-      if(idx >= 0) local[idx] = { ...local[idx], client_name:clientName, client_email:clientEmail, due_date:dueDate, tax_pct:taxPct, discount, notes, items:cleanItems, ...totals };
+      if(idx >= 0) local[idx] = { ...local[idx], client_name:clientName, client_email:clientEmail, due_date:dueDate, currency, tax_pct:taxPct, discount, notes, items:cleanItems, ...totals };
     } else {
-      local.unshift({ id:Date.now(), invoice_no:nextInvoiceNumber(), client_name:clientName, client_email:clientEmail, due_date:dueDate, tax_pct:taxPct, discount, notes, items:cleanItems, status:'draft', ...totals, created_at:new Date().toISOString() });
+      local.unshift({ id:Date.now(), invoice_no:nextInvoiceNumber(), client_name:clientName, client_email:clientEmail, due_date:dueDate, currency, tax_pct:taxPct, discount, notes, items:cleanItems, status:'draft', ...totals, created_at:new Date().toISOString() });
     }
     LS.set('invoices', local);
     invoices = local;
@@ -2302,7 +2254,7 @@ async function saveInvoice(){
 
   if(invoiceId){
     const { error } = await sb.from('invoices').update({
-      client_name:clientName, client_email:clientEmail, due_date:dueDate, tax_pct:taxPct, discount, notes,
+      client_name:clientName, client_email:clientEmail, due_date:dueDate, currency, tax_pct:taxPct, discount, notes,
       subtotal:totals.subtotal, tax:totals.tax, total:totals.total
     }).eq('id', invoiceId).eq('user_id', user.id);
     if(error){ toast('Invoice update failed: '+error.message); return; }
@@ -2312,7 +2264,7 @@ async function saveInvoice(){
   } else {
     const { data: inv, error } = await sb.from('invoices').insert({
       user_id:user.id, invoice_no:nextInvoiceNumber(), client_name:clientName, client_email:clientEmail, due_date:dueDate,
-      status:'draft', tax_pct:taxPct, discount, notes, subtotal:totals.subtotal, tax:totals.tax, total:totals.total
+      status:'draft', currency, tax_pct:taxPct, discount, notes, subtotal:totals.subtotal, tax:totals.tax, total:totals.total
     }).select().single();
     if(error){ toast('Invoice save failed: '+error.message); return; }
     const rows = cleanItems.map(it => ({ invoice_id:inv.id, user_id:user.id, description:it.description, qty:it.qty, price:it.price, line_total:it.qty*it.price }));
@@ -2338,18 +2290,18 @@ async function openInvoiceDetail(invoiceId){
           <div class="invoice-client">${inv.client_email || ''}</div>
         </div>
         <div>
-          <div class="invoice-amt">${fmt(inv.total)}</div>
+          <div class="invoice-amt">${invFmt(inv.total, inv.currency || "NGN")}</div>
           <span class="invoice-status ${invStatusClass(status)}">${status}</span>
         </div>
       </div>
       <div class="invoice-due">Due: ${inv.due_date ? fmtDate(inv.due_date) : 'No due date'}</div>
     </div>
     <div class="invoice-summary">
-      ${(items||[]).map(it => `<div class="invoice-sum-line"><span>${it.description} × ${it.qty}</span><b>${fmt(Number(it.price||0)*Number(it.qty||0))}</b></div>`).join('')}
-      <div class="invoice-sum-line"><span>Subtotal</span><b>${fmt(inv.subtotal)}</b></div>
-      <div class="invoice-sum-line"><span>Tax</span><b>${fmt(inv.tax)}</b></div>
-      <div class="invoice-sum-line"><span>Discount</span><b>-${fmt(inv.discount)}</b></div>
-      <div class="invoice-sum-line total"><span>Total</span><b>${fmt(inv.total)}</b></div>
+      ${(items||[]).map(it => `<div class="invoice-sum-line"><span>${it.description} × ${it.qty}</span><b>${invFmt(Number(it.price||0)*Number(it.qty||0), inv.currency || "NGN")}</b></div>`).join('')}
+      <div class="invoice-sum-line"><span>Subtotal</span><b>${invFmt(inv.subtotal, inv.currency || "NGN")}</b></div>
+      <div class="invoice-sum-line"><span>Tax</span><b>${invFmt(inv.tax, inv.currency || "NGN")}</b></div>
+      <div class="invoice-sum-line"><span>Discount</span><b>-${invFmt(inv.discount, inv.currency || "NGN")}</b></div>
+      <div class="invoice-sum-line total"><span>Total</span><b>${invFmt(inv.total, inv.currency || "NGN")}</b></div>
     </div>
     <div class="invoice-actions">
       <button class="invoice-btn blue" onclick="downloadInvoicePDF('${inv.id}')">PDF</button>
@@ -2623,6 +2575,7 @@ create table if not exists invoices (
   client_email text,
   due_date date,
   status text default 'draft',
+  currency text default 'NGN',
   subtotal numeric default 0,
   tax_pct numeric default 0,
   tax numeric default 0,
@@ -2651,6 +2604,11 @@ grant all on table invoices to anon;
 grant all on table invoices to authenticated;
 grant all on table invoice_items to anon;
 grant all on table invoice_items to authenticated;
+-->
+
+
+<!-- EXTRA SQL FOR THIS UPDATE:
+alter table invoices add column if not exists currency text default 'NGN';
 -->
 
 </body>
