@@ -265,8 +265,6 @@ function initFlashNigeriaAd(){
 }
 
 
-
-console.log('SAVED_FIX_V1 loaded');
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -1190,6 +1188,7 @@ a{color:inherit;text-decoration:none;}
 
 <script>
 console.log('MONIETRACK_SYNTAX_FIXED_V3');
+console.log('SAFE_LOGIN_SAVED_FIX_V2 loaded');
 // ── SUPABASE ──
 const SB_URL = 'https://vmjnxedyaboxmhtnagro.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZtam54ZWR5YWJveG1odG5hZ3JvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1NDU0MDcsImV4cCI6MjA5NzEyMTQwN30.uKyw73QIYf8CnTOI4Ic0yYojaRp4PPNxV1wlTV1BcoU';
@@ -1617,10 +1616,7 @@ async function loadRates(){
 }
 
 // ── RENDER ──
-async 
-function calcRealSaved(income, expense){
-  return Math.max(0, Number(income || 0) - Number(expense || 0));
-}
+async function calcRealSaved(income, expense){ return Math.max(0, Number(income || 0) - Number(expense || 0)); }
 
 function renderAll(){
   const [txs,buds,gls] = await Promise.all([getTx(),getBud(),getGoals()]);
