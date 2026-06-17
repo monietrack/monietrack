@@ -19,6 +19,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script>
+console.log('MONIETRACK_LOGIN_FIX_V2 loaded');
 // ── BACKGROUND PUSH NOTIFICATIONS ──
 // IMPORTANT: replace this with your own public VAPID key after generating keys.
 const VAPID_PUBLIC_KEY = 'BDpnKdS-4FNGtQS8rAXMZwFDoNJhqu9eRX6Xq1sjqYy473KjLK2pCEinaXwJsgtpIYszM';
@@ -1121,7 +1122,7 @@ async function migrateLocalToSupabase(){
   }
 }
 
-async function startApp(){
+async async function startApp(){
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('app').style.display='flex';
   // Migrate local data to Supabase if logged in
@@ -1383,7 +1384,7 @@ async function renderAll(){
   renderAnalytics(txs);
 }
 
-function fmt(n){return '₦'+Number(n||0).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2});});}
+function fmt(n){return '₦'+Number(n||0).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2});});});}
 function today(){return new Date().toISOString().split('T')[0];}
 function fmtDate(d){return new Date(d).toLocaleDateString('en-NG',{day:'numeric',month:'short'});}
 function getCat(type,id){return CATS[type]?.find(c=>c.id===id)||{icon:'📦',name:'Other'};}
