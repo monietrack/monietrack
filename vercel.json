@@ -1,6 +1,5 @@
 {
   "version": 2,
-
   "headers": [
     {
       "source": "/manifest.json",
@@ -21,10 +20,9 @@
       ]
     }
   ],
-
   "rewrites": [
     {
-      "source": "/((?!manifest\\.json|sw\\.js|favicon\\.ico|apple-touch-icon\\.png|monietrack_icon_192\\.png|monietrack_icon_256\\.png|monietrack_icon_512\\.png|monietrack_icon_1024\\.png).*)",
+      "source": "/((?!manifest\\.json|sw\\.js|favicon\\.ico|apple-touch-icon\\.png|privacy\\.html|terms\\.html|monietrack_icon_192\\.png|monietrack_icon_256\\.png|monietrack_icon_512\\.png|monietrack_icon_1024\\.png).*)",
       "destination": "/index.html"
     }
   ]
