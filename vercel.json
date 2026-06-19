@@ -1,9 +1,31 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "index.html", "use": "@vercel/static" }
+
+  "headers": [
+    {
+      "source": "/manifest.json",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json"
+        }
+      ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    }
   ],
-  "routes": [
-    { "src": "/(.*)", "dest": "/index.html" }
+
+  "rewrites": [
+    {
+      "source": "/((?!manifest\\.json|sw\\.js|favicon\\.ico|apple-touch-icon\\.png|monietrack_icon_192\\.png|monietrack_icon_256\\.png|monietrack_icon_512\\.png|monietrack_icon_1024\\.png).*)",
+      "destination": "/index.html"
+    }
   ]
 }
