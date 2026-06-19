@@ -1,7 +1,7 @@
 {
   "name": "MonieTrack PRO",
   "short_name": "MTrack",
-  "description": "Nigerian personal finance PWA. Track expenses, set budgets, save goals — all in Naira.",
+  "description": "Personal spending and planning app. Track expenses, set budgets, save goals and stay organized.",
   "id": "/?app=monietrack-v10",
   "start_url": "/?v=10",
   "scope": "/",
